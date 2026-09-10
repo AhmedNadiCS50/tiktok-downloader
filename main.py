@@ -7,6 +7,7 @@ import asyncio
 import logging
 import tempfile
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Optional, Dict, Any
 from urllib.parse import quote
@@ -35,8 +36,9 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
+import httpx
 import yt_dlp
+import instaloader
 
 try:
     from yt_dlp.networking.impersonate import ImpersonateTarget
@@ -46,14 +48,14 @@ except Exception:
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-logger = logging.getLogger("tiktok-downloader")
+logger = logging.getLogger("media-downloader")
 
 BASE_DIR     = Path(__file__).resolve().parent
 STATIC_DIR   = BASE_DIR / "static"
-DOWNLOAD_DIR = Path(tempfile.gettempdir()) / "tiktok_downloads"
+DOWNLOAD_DIR = Path(tempfile.gettempdir()) / "media_downloads"
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="TikTok Downloader", version="3.1.0")
+app = FastAPI(title="TikTok & Instagram Downloader", version="4.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -61,6 +63,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_insta_loader: Optional[instaloader.Instaloader] = None
+
+def get_instaloader() -> instaloader.Instaloader:
+    global _insta_loader
+    if _insta_loader is None:
+        _insta_loader = instaloader.Instaloader(
+            download_pictures=False,
+            download_videos=False,
+            download_video_thumbnails=False,
+            download_geotags=False,
+            download_comments=False,
+            save_metadata=False,
+            compress_json=False,
+            quiet=True,
+        )
+    return _insta_loader
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -81,10 +100,19 @@ def get_ffmpeg() -> Optional[str]:
 
 def sanitize(name: str) -> str:
     cleaned = re.sub(r'[\\/*?:"<>|]', "", name).strip()
-    return cleaned[:80] if cleaned else "tiktok_media"
+    return cleaned[:80] if cleaned else "media_download"
 
-def valid_tiktok(url: str) -> bool:
-    return bool(re.search(r"https?://(?:[a-zA-Z0-9-]+\.)?tiktok\.com/", url.strip()))
+def detect_platform(url: str) -> Optional[str]:
+    raw = url.strip().lower()
+    if re.search(r"https?://(?:[a-zA-Z0-9-]+\.)?tiktok\.com/", raw):
+        return "tiktok"
+    if re.search(r"https?://(?:www\.)?(?:instagram\.com|instagr\.am)/", raw):
+        return "instagram"
+    return None
+
+def extract_instagram_shortcode(url: str) -> Optional[str]:
+    m = re.search(r"(?:instagram\.com|instagr\.am)/(?:reel|reels|p|tv)/([a-zA-Z0-9_-]+)", url)
+    return m.group(1) if m else None
 
 def fmt_duration(s) -> str:
     if not s:
@@ -95,7 +123,7 @@ def fmt_duration(s) -> str:
 def sweep_old_files(max_age_seconds=1800):
     try:
         now = time.time()
-        for f in DOWNLOAD_DIR.glob("tk_*"):
+        for f in DOWNLOAD_DIR.glob("dl_*"):
             if f.is_file() and (now - f.stat().st_mtime > max_age_seconds):
                 try:
                     f.unlink(missing_ok=True)
@@ -117,7 +145,7 @@ def _del(path: str):
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "3.1.0"}
+    return {"status": "ok", "version": "4.0.0", "platforms": ["tiktok", "instagram"]}
 
 
 # ── Analyze ────────────────────────────────────────────────────────────────────
@@ -133,10 +161,58 @@ def _ydl_extract(url: str, opts: dict):
 async def analyze(req: AnalyzeRequest):
     raw = req.url.strip()
     if not raw:
-        raise HTTPException(400, "أدخل رابط TikTok.")
-    if not valid_tiktok(raw):
-        raise HTTPException(400, "رابط TikTok غير صالح.")
+        raise HTTPException(400, "أدخل رابط فيديو.")
+    platform = detect_platform(raw)
+    if not platform:
+        raise HTTPException(400, "رابط غير مدعوم. يُرجى إدخال رابط TikTok أو Instagram.")
 
+    loop = asyncio.get_running_loop()
+
+    # ── Instagram Analysis ───────────────────────────────────────────────────
+    if platform == "instagram":
+        shortcode = extract_instagram_shortcode(raw)
+        if not shortcode:
+            raise HTTPException(400, "تعذّر استخراج كود المنشور من رابط Instagram.")
+        try:
+            loader = get_instaloader()
+            post = await loop.run_in_executor(
+                None, lambda: instaloader.Post.from_shortcode(loader.context, shortcode)
+            )
+        except Exception as e:
+            logger.error(f"Instagram analyze error: {e}")
+            raise HTTPException(404, "تعذّر الوصول لمنشور Instagram. تأكد من أن الحساب عام والمنشور متاح.")
+
+        if not post.is_video:
+            raise HTTPException(400, "الرابط المحدد هو صورة وليس فيديو. الأداة مخصصة للفيديوهات (Reels / Videos).")
+
+        caption = (post.caption or "").strip()
+        first_line = caption.split("\n")[0] if caption else "Instagram Reel"
+        title = first_line[:100] if first_line else "Instagram Reel"
+        duration = getattr(post, "video_duration", None)
+        uploader = post.owner_username or "instagram_user"
+
+        return {
+            "status": "success",
+            "platform": "instagram",
+            "id": shortcode,
+            "title": title,
+            "uploader": f"@{uploader}",
+            "uploader_id": uploader,
+            "duration": duration,
+            "duration_formatted": fmt_duration(duration),
+            "thumbnail": post.url,
+            "width": None,
+            "height": None,
+            "resolution_label": "Original Quality (HD)",
+            "fps": None,
+            "fps_label": "Original FPS",
+            "view_count": getattr(post, "video_view_count", None),
+            "like_count": getattr(post, "likes", None),
+            "comment_count": getattr(post, "comments", None),
+            "original_url": raw,
+        }
+
+    # ── TikTok Analysis ──────────────────────────────────────────────────────
     opts: Dict[str, Any] = {
         "skip_download": True,
         "quiet":         True,
@@ -147,14 +223,13 @@ async def analyze(req: AnalyzeRequest):
         opts["impersonate"] = DEFAULT_IMPERSONATE
 
     try:
-        loop = asyncio.get_running_loop()
         info = await loop.run_in_executor(None, lambda: _ydl_extract(raw, opts))
     except Exception as e:
         msg = str(e)
-        logger.error(f"Analyze error: {msg}")
-        if "Private"    in msg: raise HTTPException(403, "الفيديو خاص.")
-        if "blocked"    in msg: raise HTTPException(403, "الـ IP محظور مؤقتاً من TikTok.")
-        if "not found"  in msg.lower(): raise HTTPException(404, "الفيديو غير موجود أو محذوف.")
+        logger.error(f"TikTok analyze error: {msg}")
+        if "Private" in msg: raise HTTPException(403, "الفيديو خاص.")
+        if "blocked" in msg: raise HTTPException(403, "الـ IP محظور مؤقتاً من TikTok.")
+        if "not found" in msg.lower(): raise HTTPException(404, "الفيديو غير موجود أو محذوف.")
         raise HTTPException(500, f"فشل جلب المعلومات: {msg}")
 
     if not info:
@@ -201,6 +276,7 @@ async def analyze(req: AnalyzeRequest):
 
     return {
         "status": "success",
+        "platform": "tiktok",
         "id":     str(info.get("id", "tiktok")),
         "title":  info.get("title") or "TikTok Video",
         "uploader":   info.get("uploader") or info.get("channel") or "Creator",
@@ -232,18 +308,90 @@ async def download(
     url: str    = Query(...),
     format: str = Query("mp4", pattern="^(mp4|mp3)$"),
 ):
-    """
-    Downloads via yt-dlp and serves as attachment so the browser saves it directly.
-    """
     raw = url.strip()
-    if not valid_tiktok(raw):
-        raise HTTPException(400, "رابط غير صالح.")
+    platform = detect_platform(raw)
+    if not platform:
+        raise HTTPException(400, "رابط غير مدعوم.")
 
     sweep_old_files()
+    loop = asyncio.get_running_loop()
     ffmpeg = get_ffmpeg()
     sid    = f"{int(time.time())}_{os.urandom(4).hex()}"
-    out    = str(DOWNLOAD_DIR / f"tk_{sid}")
 
+    # ── Instagram Download ───────────────────────────────────────────────────
+    if platform == "instagram":
+        shortcode = extract_instagram_shortcode(raw)
+        if not shortcode:
+            raise HTTPException(400, "رابط Instagram غير صالح.")
+
+        loader = get_instaloader()
+        try:
+            post = await loop.run_in_executor(
+                None, lambda: instaloader.Post.from_shortcode(loader.context, shortcode)
+            )
+        except Exception as e:
+            logger.error(f"Instagram download info error: {e}")
+            raise HTTPException(404, "تعذّر جلب فيديو Instagram.")
+
+        if not post.video_url:
+            raise HTTPException(400, "لا يحتوي المنشور على رابط فيديو قابل للتنزيل.")
+
+        mp4_path = str(DOWNLOAD_DIR / f"dl_{sid}.mp4")
+
+        # Download directly via httpx stream
+        try:
+            async with httpx.AsyncClient(timeout=40, follow_redirects=True) as client:
+                async with client.stream("GET", post.video_url) as resp:
+                    if resp.status_code != 200:
+                        raise HTTPException(502, "فشل جلب ملف الفيديو من سيرفرات Instagram.")
+                    with open(mp4_path, "wb") as f:
+                        async for chunk in resp.aiter_bytes(chunk_size=65536):
+                            f.write(chunk)
+        except Exception as e:
+            logger.error(f"Download IG stream error: {e}")
+            raise HTTPException(500, f"فشل تحميل الفيديو: {e}")
+
+        caption = (post.caption or "").strip()
+        first_line = caption.split("\n")[0] if caption else "Instagram"
+        title = sanitize(f"{first_line[:40]} - {post.owner_username}")
+
+        if format == "mp3" and ffmpeg:
+            mp3_path = str(DOWNLOAD_DIR / f"dl_{sid}.mp3")
+            try:
+                cmd = [ffmpeg, "-y", "-i", mp4_path, "-vn", "-b:a", "320k", mp3_path]
+                await loop.run_in_executor(None, lambda: subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True))
+                background_tasks.add_task(_del, mp4_path)
+                background_tasks.add_task(_del, mp3_path)
+                filename = f"{title}.mp3"
+                ascii_fn = re.sub(r"[^\x00-\x7F]+", "_", filename).strip("_") or "media_audio"
+                return FileResponse(
+                    path=mp3_path,
+                    media_type="audio/mpeg",
+                    filename=filename,
+                    headers={
+                        "Content-Disposition": f'attachment; filename="{ascii_fn}"; filename*=UTF-8\'\'{quote(filename)}',
+                        "Cache-Control": "no-cache",
+                    },
+                )
+            except Exception as e:
+                logger.warning(f"Audio conversion failed: {e}")
+                # Fallback to serving the mp4 video if mp3 conversion fails
+
+        background_tasks.add_task(_del, mp4_path)
+        filename = f"{title}.mp4"
+        ascii_fn = re.sub(r"[^\x00-\x7F]+", "_", filename).strip("_") or "media_video"
+        return FileResponse(
+            path=mp4_path,
+            media_type="video/mp4",
+            filename=filename,
+            headers={
+                "Content-Disposition": f'attachment; filename="{ascii_fn}"; filename*=UTF-8\'\'{quote(filename)}',
+                "Cache-Control": "no-cache",
+            },
+        )
+
+    # ── TikTok Download ──────────────────────────────────────────────────────
+    out = str(DOWNLOAD_DIR / f"dl_{sid}")
     opts: Dict[str, Any] = {
         "quiet":          True,
         "no_warnings":    True,
@@ -271,7 +419,6 @@ async def download(
         })
 
     try:
-        loop = asyncio.get_running_loop()
         info = await loop.run_in_executor(None, lambda: _ydl_download(raw, opts))
     except Exception as e:
         msg = str(e)
@@ -319,7 +466,7 @@ async def index():
     f = STATIC_DIR / "index.html"
     return HTMLResponse(
         f.read_text(encoding="utf-8") if f.exists()
-        else "<h1>TikTok Downloader</h1>"
+        else "<h1>TikTok & Instagram Downloader</h1>"
     )
 
 if __name__ == "__main__":

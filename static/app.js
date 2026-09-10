@@ -90,6 +90,11 @@ clearBtn.addEventListener('click', () => {
   clearBtn.classList.add('hidden');
   urlInput.focus();
 });
+const isSupportedUrl = (u) => {
+  const l = (u || '').toLowerCase();
+  return l.includes('tiktok.com') || l.includes('instagram.com') || l.includes('instagr.am');
+};
+
 pasteBtn.addEventListener('click', async () => {
   try {
     const text = await navigator.clipboard.readText();
@@ -97,7 +102,7 @@ pasteBtn.addEventListener('click', async () => {
       urlInput.value = text.trim();
       clearBtn.classList.remove('hidden');
       showToast('تم اللصق!', '📋');
-      if (text.includes('tiktok.com')) analyzeForm.dispatchEvent(new Event('submit'));
+      if (isSupportedUrl(text)) analyzeForm.dispatchEvent(new Event('submit'));
     } else {
       showToast('الحافظة فارغة', '⚠️');
     }
@@ -111,9 +116,9 @@ pasteBtn.addEventListener('click', async () => {
 analyzeForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const url = urlInput.value.trim();
-  if (!url) { showError('رابط فارغ', 'أدخل رابط TikTok أولاً.'); return; }
-  if (!url.toLowerCase().includes('tiktok.com')) {
-    showError('رابط غير صالح', 'الرابط لا يبدو من TikTok.'); return;
+  if (!url) { showError('رابط فارغ', 'أدخل رابط فيديو TikTok أو Instagram أولاً.'); return; }
+  if (!isSupportedUrl(url)) {
+    showError('رابط غير مدعوم', 'الرابط لا يبدو من TikTok أو Instagram. يُرجى التحقق من الرابط.'); return;
   }
   hideError();
   setAnalyzeLoading(true);
@@ -131,7 +136,8 @@ analyzeForm.addEventListener('submit', async (e) => {
 
     currentVideoData = data;
     renderPreview(data);
-    showToast('تم تحليل الفيديو!', '🎉');
+    const platName = data.platform === 'instagram' ? 'Instagram' : 'TikTok';
+    showToast(`تم تحليل فيديو ${platName}!`, '🎉');
   } catch (err) {
     let msg = err.message || 'تعذّر جلب التفاصيل.';
     if (err.name === 'TypeError' && msg.includes('fetch'))
@@ -156,10 +162,10 @@ function setAnalyzeLoading(on) {
 function renderPreview(data) {
   videoThumbnail.src = data.thumbnail || 'https://via.placeholder.com/400x600?text=No+Thumbnail';
   videoDuration.textContent = data.duration_formatted || '00:00';
-  videoTitle.textContent    = data.title || 'TikTok Video';
+  videoTitle.textContent    = data.title || (data.platform === 'instagram' ? 'Instagram Reel' : 'TikTok Video');
   const creator = data.uploader || 'creator';
   videoUploader.textContent  = creator.startsWith('@') ? creator : `@${creator}`;
-  authorAvatarChar.textContent = (creator.replace('@', '')[0] || 'T').toUpperCase();
+  authorAvatarChar.textContent = (creator.replace('@', '')[0] || (data.platform === 'instagram' ? 'I' : 'T')).toUpperCase();
   videoResolution.textContent = data.resolution_label || 'Original HD';
   videoFps.textContent        = data.fps_label || 'Original FPS';
   previewCard.classList.remove('hidden');
