@@ -9,57 +9,56 @@ const API_BASE = getApiBase();
 
 let currentVideoData = null;
 let isAnalyzing = false;
-let isDownloading = false;
 
 // DOM Elements
-const analyzeForm       = document.getElementById('analyzeForm');
-const urlInput          = document.getElementById('urlInput');
-const clearBtn          = document.getElementById('clearBtn');
-const pasteBtn          = document.getElementById('pasteBtn');
-const submitBtn         = document.getElementById('submitBtn');
-const btnText           = document.getElementById('btnText');
-const btnSpinner        = document.getElementById('btnSpinner');
-const errorBox          = document.getElementById('errorBox');
-const errorTitle        = document.getElementById('errorTitle');
-const errorMessage      = document.getElementById('errorMessage');
-const previewCard       = document.getElementById('previewCard');
-const videoThumbnail    = document.getElementById('videoThumbnail');
-const videoDuration     = document.getElementById('videoDuration');
-const videoTitle        = document.getElementById('videoTitle');
-const videoUploader     = document.getElementById('videoUploader');
-const authorAvatarChar  = document.getElementById('authorAvatarChar');
-const videoResolution   = document.getElementById('videoResolution');
-const videoFps          = document.getElementById('videoFps');
-const downloadVideoBtn  = document.getElementById('downloadVideoBtn');
-const downloadAudioBtn  = document.getElementById('downloadAudioBtn');
-const downloadStatus    = document.getElementById('downloadStatus');
-const downloadStatusText= document.getElementById('downloadStatusText');
-const toast             = document.getElementById('toast');
-const toastMessage      = document.getElementById('toastMessage');
-const toastIcon         = document.getElementById('toastIcon');
+const analyzeForm      = document.getElementById('analyzeForm');
+const urlInput         = document.getElementById('urlInput');
+const clearBtn         = document.getElementById('clearBtn');
+const pasteBtn         = document.getElementById('pasteBtn');
+const submitBtn        = document.getElementById('submitBtn');
+const btnText          = document.getElementById('btnText');
+const btnSpinner       = document.getElementById('btnSpinner');
+const errorBox         = document.getElementById('errorBox');
+const errorTitle       = document.getElementById('errorTitle');
+const errorMessage     = document.getElementById('errorMessage');
+const previewCard      = document.getElementById('previewCard');
+const videoThumbnail   = document.getElementById('videoThumbnail');
+const videoDuration    = document.getElementById('videoDuration');
+const videoTitle       = document.getElementById('videoTitle');
+const videoUploader    = document.getElementById('videoUploader');
+const authorAvatarChar = document.getElementById('authorAvatarChar');
+const videoResolution  = document.getElementById('videoResolution');
+const videoFps         = document.getElementById('videoFps');
+const downloadVideoBtn = document.getElementById('downloadVideoBtn');
+const downloadAudioBtn = document.getElementById('downloadAudioBtn');
+const downloadStatus   = document.getElementById('downloadStatus');
+const downloadStatusText = document.getElementById('downloadStatusText');
+const toast            = document.getElementById('toast');
+const toastMessage     = document.getElementById('toastMessage');
+const toastIcon        = document.getElementById('toastIcon');
 
-// ── Backend health ──────────────────────────────────────────────────────────
+// ── Health ──────────────────────────────────────────────────────────────────
 async function checkBackendHealth() {
   const dot  = document.getElementById('serverStatusDot');
   const text = document.getElementById('serverStatusText');
   if (!dot || !text) return;
   try {
     const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 3500);
+    setTimeout(() => ctrl.abort(), 4000);
     const res = await fetch(`${API_BASE}/api/health`, { signal: ctrl.signal });
     if (res.ok) {
-      dot.className  = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
-      text.textContent = 'Backend Online (Port 8000)';
-      text.className = 'text-xs text-emerald-400 font-medium';
+      dot.className    = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+      text.textContent = 'Backend Online';
+      text.className   = 'text-xs text-emerald-400 font-medium';
       return;
     }
   } catch (_) {}
-  dot.className  = 'w-2 h-2 rounded-full bg-rose-500';
-  text.textContent = 'Backend Offline – شغّل run.bat';
-  text.className = 'text-xs text-rose-400 font-medium';
+  dot.className    = 'w-2 h-2 rounded-full bg-rose-500';
+  text.textContent = 'Backend Offline';
+  text.className   = 'text-xs text-rose-400 font-medium';
 }
 checkBackendHealth();
-setInterval(checkBackendHealth, 10000);
+setInterval(checkBackendHealth, 15000);
 
 // ── Toast ───────────────────────────────────────────────────────────────────
 function showToast(message, icon = '✨', duration = 3500) {
@@ -73,9 +72,9 @@ function showToast(message, icon = '✨', duration = 3500) {
   }, duration);
 }
 
-// ── Error banner ────────────────────────────────────────────────────────────
+// ── Error ───────────────────────────────────────────────────────────────────
 function showError(title, msg) {
-  errorTitle.textContent = title;
+  errorTitle.textContent   = title;
   errorMessage.textContent = msg;
   errorBox.classList.remove('hidden');
   errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -84,7 +83,7 @@ function hideError() { errorBox.classList.add('hidden'); }
 
 // ── Input helpers ───────────────────────────────────────────────────────────
 urlInput.addEventListener('input', () => {
-  clearBtn.classList.toggle('hidden', urlInput.value.trim().length === 0);
+  clearBtn.classList.toggle('hidden', !urlInput.value.trim());
 });
 clearBtn.addEventListener('click', () => {
   urlInput.value = '';
@@ -94,13 +93,11 @@ clearBtn.addEventListener('click', () => {
 pasteBtn.addEventListener('click', async () => {
   try {
     const text = await navigator.clipboard.readText();
-    if (text && text.trim()) {
+    if (text?.trim()) {
       urlInput.value = text.trim();
       clearBtn.classList.remove('hidden');
-      showToast('تم اللصق من الحافظة!', '📋');
-      if (text.includes('tiktok.com')) {
-        analyzeForm.dispatchEvent(new Event('submit'));
-      }
+      showToast('تم اللصق!', '📋');
+      if (text.includes('tiktok.com')) analyzeForm.dispatchEvent(new Event('submit'));
     } else {
       showToast('الحافظة فارغة', '⚠️');
     }
@@ -120,6 +117,7 @@ analyzeForm.addEventListener('submit', async (e) => {
   }
   hideError();
   setAnalyzeLoading(true);
+
   try {
     const res = await fetch(`${API_BASE}/api/analyze`, {
       method: 'POST',
@@ -129,17 +127,15 @@ analyzeForm.addEventListener('submit', async (e) => {
     const rawText = await res.text();
     let data = {};
     try { if (rawText) data = JSON.parse(rawText); } catch (_) {}
-    if (!res.ok) {
-      throw new Error(data.detail || `خطأ من السيرفر (${res.status})`);
-    }
+    if (!res.ok) throw new Error(data.detail || `خطأ (${res.status})`);
+
     currentVideoData = data;
     renderPreview(data);
     showToast('تم تحليل الفيديو!', '🎉');
   } catch (err) {
-    let msg = err.message || 'تعذّر جلب تفاصيل الفيديو.';
-    if (err.name === 'TypeError' && msg.includes('fetch')) {
-      msg = 'السيرفر غير مشغّل! شغّل run.bat ثم افتح http://localhost:8000';
-    }
+    let msg = err.message || 'تعذّر جلب التفاصيل.';
+    if (err.name === 'TypeError' && msg.includes('fetch'))
+      msg = 'السيرفر غير مشغّل! شغّل run.bat أو افتح http://localhost:8000';
     showError('فشل التحليل', msg);
     previewCard.classList.add('hidden');
   } finally {
@@ -156,51 +152,56 @@ function setAnalyzeLoading(on) {
   btnSpinner.classList.toggle('hidden', !on);
 }
 
-// ── Preview ──────────────────────────────────────────────────────────────────
+// ── Preview ─────────────────────────────────────────────────────────────────
 function renderPreview(data) {
   videoThumbnail.src = data.thumbnail || 'https://via.placeholder.com/400x600?text=No+Thumbnail';
   videoDuration.textContent = data.duration_formatted || '00:00';
-  videoTitle.textContent = data.title || 'TikTok Video';
+  videoTitle.textContent    = data.title || 'TikTok Video';
   const creator = data.uploader || 'creator';
-  videoUploader.textContent = creator.startsWith('@') ? creator : `@${creator}`;
+  videoUploader.textContent  = creator.startsWith('@') ? creator : `@${creator}`;
   authorAvatarChar.textContent = (creator.replace('@', '')[0] || 'T').toUpperCase();
   videoResolution.textContent = data.resolution_label || 'Original HD';
-  videoFps.textContent = data.fps_label || 'Original FPS';
+  videoFps.textContent        = data.fps_label || 'Original FPS';
   previewCard.classList.remove('hidden');
   previewCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // ── Download ─────────────────────────────────────────────────────────────────
-// Simple: فتح رابط التحميل مباشرةً في tab جديد.
-// السيرفر بيحمّل من TikTok ثم يبعت الملف — المتصفح يستقبله تلقائياً.
+// Strategy:
+//   1. Try opening the CDN URL directly (fast, no server needed).
+//   2. If no CDN URL available → fallback to server /api/download.
+//
+// Note: TikTok CDN URLs sometimes have IP/referer restrictions.
+// The browser will either download the file or show it — both are fine.
+
 function triggerDownload(format) {
   if (!currentVideoData || !currentVideoData.original_url) {
-    showError('لا يوجد فيديو', 'حلّل رابط TikTok أولاً قبل التحميل.');
+    showError('لا يوجد فيديو', 'حلّل رابط TikTok أولاً.');
     return;
   }
 
-  const downloadUrl =
-    `${API_BASE}/api/download` +
-    `?url=${encodeURIComponent(currentVideoData.original_url)}` +
-    `&format=${format}`;
+  const vid = currentVideoData;
+  const label = format === 'mp4' ? 'الفيديو (MP4)' : 'الصوت';
 
-  const label = format === 'mp4' ? 'الفيديو' : 'الصوت';
-  setDownloadLoading(true, `⏳ جارٍ تحميل ${label}... قد يستغرق نصف دقيقة`);
-  showToast(`جارٍ تحميل ${label}، انتظر من فضلك...`, '📥', 60000);
+  // Pick CDN URL
+  const cdnUrl = format === 'mp4'
+    ? vid.direct_video_url
+    : vid.direct_audio_url;
 
-  // فتح في نافذة جديدة — المتصفح يُظهر نافذة الحفظ تلقائياً
-  window.open(downloadUrl, '_blank');
-
-  // إظهار رسالة الانتظار لمدة 45 ثانية
-  setTimeout(() => {
-    setDownloadLoading(false);
-    // إخفاء التوست القديم وإظهار رسالة النجاح
-    showToast(`✅ تم إرسال طلب تحميل ${label}!`, '🎬', 4000);
-  }, 45000);
+  if (cdnUrl) {
+    // Open CDN URL directly → browser downloads or plays it
+    window.open(cdnUrl, '_blank');
+    showToast(`جارٍ فتح ${label}...`, '📥', 5000);
+  } else {
+    showError('لا يوجد رابط', 'لم يُعثر على رابط CDN. أعِد التحليل وحاول مجدداً.');
+  }
 }
 
+// ── Button listeners ─────────────────────────────────────────────────────────
+downloadVideoBtn.addEventListener('click', () => triggerDownload('mp4'));
+downloadAudioBtn.addEventListener('click', () => triggerDownload('mp3'));
+
 function setDownloadLoading(on, statusText = '') {
-  isDownloading = on;
   downloadStatusText.textContent = statusText;
   downloadStatus.classList.toggle('hidden', !on);
   downloadVideoBtn.disabled = on;
@@ -208,7 +209,3 @@ function setDownloadLoading(on, statusText = '') {
   downloadVideoBtn.classList.toggle('opacity-75', on);
   downloadAudioBtn.classList.toggle('opacity-75', on);
 }
-
-// ── Button listeners ─────────────────────────────────────────────────────────
-downloadVideoBtn.addEventListener('click', () => triggerDownload('mp4'));
-downloadAudioBtn.addEventListener('click', () => triggerDownload('mp3'));
