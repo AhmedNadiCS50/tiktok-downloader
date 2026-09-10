@@ -1,60 +1,36 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>Ahmed Nadi Downloader | TikTok, Instagram & YouTube HD</title>
-  <meta name="description" content="Ultra-fast, studio quality TikTok & Instagram media downloader created by Ahmed Nadi. Direct original resolution MP4 & 320kbps MP3 audio with 3D interactive interface.">
-  
+  <title>Ahmed Nadi Downloader v6.0 | TikTok & Instagram HD</title>
+  <meta name="description" content="Ahmed Nadi's ultra-fast TikTok & Instagram media downloader with 3D interactive Jellyfish background, galaxy star field, and full feature suite.">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
-  <!-- Three.js 3D Engine Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-  <!-- Tailwind CSS CDN -->
+  <!-- Three.js + QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: 'class',
+      darkMode: ['attribute', '[data-theme]'],
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['Plus Jakarta Sans', 'sans-serif'],
-          },
-          colors: {
-            brand: {
-              cyan: '#00F2FE',
-              cyanHover: '#4FACFE',
-              pink: '#FE2C55',
-              pinkHover: '#E0264A',
-              dark: '#05070A',
-              card: 'rgba(15, 20, 32, 0.65)',
-              border: 'rgba(255, 255, 255, 0.1)',
-            }
-          },
+          fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
           animation: {
-            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'pulse-slow':   'pulse 4s cubic-bezier(0.4,0,0.6,1) infinite',
             'float-smooth': 'floatSmooth 5s ease-in-out infinite',
-            'glow-spin': 'glowSpin 10s linear infinite',
-            'shine': 'shine 2.5s infinite',
+            'shimmer':      'shimmer 1.8s infinite linear',
           },
           keyframes: {
-            floatSmooth: {
-              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
-              '50%': { transform: 'translateY(-8px) rotate(1deg)' },
-            },
-            glowSpin: {
-              '0%': { transform: 'rotate(0deg)' },
-              '100%': { transform: 'rotate(360deg)' },
-            },
-            shine: {
-              '100%': { left: '125%' }
-            }
+            floatSmooth: { '0%,100%': {transform:'translateY(0)'}, '50%': {transform:'translateY(-8px)'} },
+            shimmer:     { '0%': {backgroundPosition:'-400px 0'}, '100%': {backgroundPosition:'400px 0'} },
           }
         }
       }
@@ -62,587 +38,624 @@
   </script>
 
   <style>
-    /* Premium Ultra-Modern Aesthetics */
+    /* ── Theme Variables ──────────────────────────────────────────── */
+    :root {
+      --bg:          #05070A;
+      --card-bg:     rgba(13,17,26,0.65);
+      --card-border: rgba(255,255,255,0.08);
+      --text:        #F3F4F6;
+      --text-muted:  #9CA3AF;
+      --input-bg:    rgba(7,10,16,0.75);
+    }
+    [data-theme="light"] {
+      --bg:          #F0F4FF;
+      --card-bg:     rgba(255,255,255,0.75);
+      --card-border: rgba(0,0,0,0.10);
+      --text:        #0F172A;
+      --text-muted:  #475569;
+      --input-bg:    rgba(255,255,255,0.9);
+    }
+
     body {
-      background-color: #05070A;
-      color: #F3F4F6;
+      background-color: var(--bg);
+      color: var(--text);
       font-family: 'Plus Jakarta Sans', sans-serif;
       overflow-x: hidden;
+      transition: background-color 0.35s ease, color 0.35s ease;
     }
+    [data-theme="light"] body { background-color: #EEF2FF; }
 
-    /* 3D Canvas Fixed Layer */
     #bg3dCanvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: -10;
-      pointer-events: none;
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: -10; pointer-events: none;
+      transition: opacity 0.5s ease;
     }
+    [data-theme="light"] #bg3dCanvas { opacity: 0.18; }
 
-    /* Modern Glassmorphism & Sheen */
+    /* ── Glassmorphism ──────────────────────────────────────────── */
     .glass-panel {
-      background: rgba(13, 17, 26, 0.65);
+      background: var(--card-bg);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+      transition: border-color 0.3s, box-shadow 0.3s, background 0.35s;
     }
-    
     .glass-panel:hover {
-      border-color: rgba(0, 242, 254, 0.3);
-      box-shadow: 0 25px 60px rgba(0, 242, 254, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      border-color: rgba(0,242,254,0.3);
+      box-shadow: 0 25px 60px rgba(0,242,254,0.12), inset 0 1px 0 rgba(255,255,255,0.2);
     }
-
     .glass-input {
-      background: rgba(7, 10, 16, 0.75);
+      background: var(--input-bg);
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid var(--card-border);
+      color: var(--text);
       transition: all 0.25s ease;
     }
-
     .glass-input:focus {
-      background: rgba(10, 14, 22, 0.9);
-      border-color: rgba(0, 242, 254, 0.6);
-      box-shadow: 0 0 25px rgba(0, 242, 254, 0.25);
+      outline: none;
+      border-color: rgba(0,242,254,0.6);
+      box-shadow: 0 0 25px rgba(0,242,254,0.25);
     }
 
-    /* Dynamic Gradient Texts */
+    /* ── Gradients ──────────────────────────────────────────────── */
     .gradient-title {
-      background: linear-gradient(135deg, #00F2FE 0%, #FFFFFF 45%, #FE2C55 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 30px rgba(0, 242, 254, 0.25));
+      background: linear-gradient(135deg, #00F2FE 0%, #FFF 45%, #FE2C55 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-
     .gradient-brand {
-      background: linear-gradient(135deg, #00F2FE 0%, #FFFFFF 60%, #FE2C55 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      background: linear-gradient(135deg, #00F2FE 0%, #FFF 60%, #FE2C55 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
-    .gradient-border-box {
-      position: relative;
-      border-radius: 1.25rem;
-    }
-    
-    .gradient-border-box::before {
-      content: '';
-      position: absolute;
-      inset: -1px;
-      border-radius: inherit;
-      padding: 1px;
-      background: linear-gradient(135deg, rgba(0, 242, 254, 0.4), rgba(254, 44, 85, 0.4));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-    }
+    /* ── Glow ──────────────────────────────────────────────────── */
+    .glow-cyan { box-shadow: 0 0 35px -5px rgba(0,242,254,0.45); }
+    .glow-pink { box-shadow: 0 0 35px -5px rgba(254,44,85,0.45); }
+    .avatar-glow { box-shadow: 0 0 28px rgba(0,242,254,0.45), 0 0 50px rgba(254,44,85,0.3); }
 
-    /* Glow utilities */
-    .glow-cyan {
-      box-shadow: 0 0 35px -5px rgba(0, 242, 254, 0.4);
-    }
+    /* ── Platform Theme ─────────────────────────────────────────── */
+    .platform-tiktok   { border-color: rgba(0,242,254,0.4) !important; }
+    .platform-instagram{ border-color: rgba(254,44,85,0.4) !important; }
+    .platform-youtube  { border-color: rgba(255,0,0,0.4)   !important; }
 
-    .glow-pink {
-      box-shadow: 0 0 35px -5px rgba(254, 44, 85, 0.4);
-    }
-
-    .avatar-glow {
-      box-shadow: 0 0 25px rgba(0, 242, 254, 0.4), 0 0 40px rgba(254, 44, 85, 0.3);
-    }
-
-    /* Button shine effect */
-    .btn-shine {
-      position: relative;
-      overflow: hidden;
-    }
+    /* ── Button Shine ──────────────────────────────────────────── */
+    .btn-shine { position: relative; overflow: hidden; }
     .btn-shine::after {
       content: '';
-      position: absolute;
-      top: -50%;
-      left: -75%;
-      width: 50%;
-      height: 200%;
-      opacity: 0;
-      transform: rotate(30deg);
-      background: linear-gradient(
-        to right,
-        rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.3) 100%
-      );
-    }
-    .btn-shine:hover::after {
-      opacity: 1;
-      left: 125%;
+      position: absolute; top: -50%; left: -75%;
+      width: 50%; height: 200%;
+      opacity: 0; transform: rotate(30deg);
+      background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.28) 100%);
       transition: all 0.75s ease-in-out;
     }
+    .btn-shine:hover::after { opacity: 1; left: 125%; }
 
-    /* Entrance animations */
+    /* ── Ripple ─────────────────────────────────────────────────── */
+    .ripple-container { position: relative; overflow: hidden; }
+    .ripple {
+      position: absolute; border-radius: 50%;
+      transform: scale(0); animation: rippleAnim 0.6s linear;
+      background: rgba(255,255,255,0.3); pointer-events: none;
+    }
+    @keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
+
+    /* ── Skeleton Shimmer ───────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%);
+      background-size: 400px 100%;
+      animation: shimmer 1.8s infinite linear;
+      border-radius: 0.75rem;
+    }
+    [data-theme="light"] .skeleton {
+      background: linear-gradient(90deg, #E2E8F0 25%, #CBD5E1 50%, #E2E8F0 75%);
+      background-size: 400px 100%;
+    }
+
+    /* ── Progress Bar ───────────────────────────────────────────── */
+    #progressBarOuter {
+      width: 100%; height: 6px; border-radius: 99px;
+      background: rgba(255,255,255,0.08); overflow: hidden;
+    }
+    #progressBarInner {
+      height: 100%; border-radius: 99px; width: 0%;
+      background: linear-gradient(90deg, #00F2FE, #4FACFE, #FE2C55);
+      transition: width 0.4s ease;
+      box-shadow: 0 0 12px rgba(0,242,254,0.6);
+    }
+
+    /* ── Card Entrance ──────────────────────────────────────────── */
     .animate-card-in {
-      animation: cardIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: cardIn 0.45s cubic-bezier(0.16,1,0.3,1) forwards;
     }
-
     @keyframes cardIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px) scale(0.98);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+      from { opacity:0; transform: translateY(24px) scale(0.97); }
+      to   { opacity:1; transform: translateY(0)    scale(1);    }
     }
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
+    /* ── QR Modal ──────────────────────────────────────────────── */
+    #qrModal {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
     }
-    ::-webkit-scrollbar-track {
-      background: #05070A;
+    #qrModal.open { opacity: 1; pointer-events: all; }
+    #qrBox { background: #fff; border-radius: 1rem; padding: 1.5rem; }
+
+    /* ── Mini Player ──────────────────────────────────────────── */
+    #miniPlayer {
+      width: 100%; border-radius: 0.75rem; background: #000;
+      max-height: 200px; display: none;
+      border: 1px solid rgba(0,242,254,0.3);
     }
-    ::-webkit-scrollbar-thumb {
-      background: #1F293D;
-      border-radius: 4px;
+
+    /* ── Batch Progress ─────────────────────────────────────────── */
+    .batch-item-status {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; flex-shrink: 0;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #00F2FE;
+
+    /* ── History Card ────────────────────────────────────────────── */
+    #historyPanel { max-height: 400px; overflow-y: auto; }
+
+    /* ── Scrollbar ──────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1F293D; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00F2FE; }
+
+    /* ── Particle Cursor ─────────────────────────────────────────── */
+    .cursor-particle {
+      position: fixed; pointer-events: none; z-index: 9999;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: radial-gradient(circle, #00F2FE, transparent);
+      transform: translate(-50%, -50%);
+      animation: particleFade 0.8s ease-out forwards;
+    }
+    @keyframes particleFade {
+      0%   { opacity:1; transform: translate(-50%,-50%) scale(1); }
+      100% { opacity:0; transform: translate(-50%,-50%) scale(0.2); }
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500/30 selection:text-cyan-200 relative">
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500/30">
 
-  <!-- Three.js 3D Background Canvas Layer -->
+  <!-- 3D Canvas -->
   <canvas id="bg3dCanvas"></canvas>
 
-  <!-- Ambient Light Orbs -->
+  <!-- Ambient orbs -->
   <div class="fixed top-[-200px] left-[-150px] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[160px] pointer-events-none -z-10 animate-pulse-slow"></div>
-  <div class="fixed bottom-[-200px] right-[-150px] w-[700px] h-[700px] bg-rose-600/10 rounded-full blur-[170px] pointer-events-none -z-10 animate-pulse-slow" style="animation-delay: 2s;"></div>
+  <div class="fixed bottom-[-200px] right-[-150px] w-[700px] h-[700px] bg-rose-600/10 rounded-full blur-[170px] pointer-events-none -z-10 animate-pulse-slow" style="animation-delay:2s"></div>
 
-  <!-- Header / Navigation -->
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
   <header class="w-full border-b border-white/10 glass-panel sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between py-3">
-      
-      <!-- Creator Brand & Avatar -->
-      <div class="flex items-center space-x-3.5 cursor-pointer group" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+
+      <!-- Logo -->
+      <div class="flex items-center space-x-3 cursor-pointer group" onclick="window.scrollTo({top:0,behavior:'smooth'})">
         <div class="relative w-11 h-11 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-blue-500 to-rose-500 avatar-glow group-hover:scale-105 transition duration-300">
-          <img 
-            src="/static/ahmed_nadi.jpg" 
-            alt="Ahmed Nadi" 
-            class="w-full h-full object-cover rounded-full border border-black"
-          >
+          <img src="/static/ahmed_nadi.jpg" alt="Ahmed Nadi" class="w-full h-full object-cover rounded-full border border-black">
           <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400 border-2 border-black rounded-full animate-pulse"></span>
         </div>
-        
         <div>
-          <span class="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+          <span class="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2" style="color:var(--text)">
             Ahmed <span class="gradient-brand">Nadi</span>
-            <span class="text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full bg-gradient-to-r from-cyan-500/20 to-rose-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm">
-              3D PRO
+            <span class="text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full bg-gradient-to-r from-cyan-500/20 to-rose-500/20 text-cyan-300 border border-cyan-500/40">
+              v6.0 PRO
             </span>
           </span>
-          <span class="text-[11px] font-semibold text-gray-400 block -mt-1 tracking-wide">
-            Official Media Downloader
-          </span>
+          <span class="text-[11px] font-semibold text-gray-400 block -mt-1 tracking-wide">Official Media Downloader</span>
         </div>
       </div>
 
-      <div class="flex items-center space-x-3">
-        <div id="serverStatusContainer" class="hidden sm:flex items-center gap-2 text-xs text-gray-300 bg-white/5 px-3.5 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div id="serverStatusContainer" class="hidden sm:flex items-center gap-2 text-xs px-3.5 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md" style="color:var(--text-muted)">
           <span id="serverStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
           <span id="serverStatusText">Engine Ready</span>
         </div>
-        <a href="#about-creator" class="text-xs sm:text-sm font-bold text-cyan-300 hover:text-white transition px-3.5 py-2 rounded-xl bg-cyan-950/40 border border-cyan-500/30 hover:border-cyan-400">
-          About Creator
-        </a>
+
+        <!-- Dark/Light Toggle -->
+        <button id="themeToggle" title="Toggle Theme" class="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/40 transition cursor-pointer">
+          <svg id="themeIconDark" class="w-5 h-5 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+          <svg id="themeIconLight" class="hidden w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </button>
+
+        <button id="historyToggleBtn" title="Download History" class="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-rose-500/40 transition cursor-pointer relative">
+          <svg class="w-5 h-5 text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span id="historyBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">0</span>
+        </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Container -->
+  <!-- ── Main ─────────────────────────────────────────────────────────── -->
   <main class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16 flex-1 w-full relative z-10">
 
-    <!-- Hero Title -->
+    <!-- Hero -->
     <div class="text-center space-y-4 mb-10">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs sm:text-sm font-semibold text-gray-200 shadow-inner backdrop-blur-md animate-float-smooth">
-        <span class="text-cyan-400">⚡ Created & Engineered by Ahmed Nadi</span>
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs sm:text-sm font-semibold backdrop-blur-md animate-float-smooth" style="color:var(--text-muted)">
+        <span class="text-cyan-400">⚡ Engineered by Ahmed Nadi</span>
         <span class="text-gray-500">•</span>
-        <span class="text-rose-400">3D Interactive Engine</span>
+        <span class="text-rose-400">3D Interactive Engine v6.0</span>
       </div>
 
-      <h1 class="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight">
-        Ahmed Nadi Media Downloader <br>
-        <span class="gradient-title">TikTok & Instagram HD Studio</span>
-      </h1>
+      <!-- Animated Stats Counter -->
+      <div class="flex items-center justify-center gap-3 flex-wrap">
+        <div class="flex items-center gap-2 px-4 py-1.5 rounded-full glass-panel border border-cyan-500/20 text-sm font-bold">
+          <span class="text-2xl">🎬</span>
+          <span class="text-cyan-300"><span id="statsCounter">0</span> Videos Analyzed</span>
+        </div>
+        <div class="flex items-center gap-2 px-4 py-1.5 rounded-full glass-panel border border-rose-500/20 text-sm font-bold">
+          <span class="text-2xl">📥</span>
+          <span class="text-rose-300"><span id="downloadsCounter">0</span> Downloads</span>
+        </div>
+      </div>
 
-      <p class="text-gray-300 text-base sm:text-lg max-w-2xl mx-auto font-normal leading-relaxed">
-        Paste any TikTok or Instagram link below to extract original HD resolution, native 60 FPS video, or studio quality 320kbps MP3 audio instantly.
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight" style="color:var(--text)">
+        Ahmed Nadi Media Downloader <br>
+        <span class="gradient-title">TikTok & Instagram Studio HD</span>
+      </h1>
+      <p class="text-base sm:text-lg max-w-2xl mx-auto leading-relaxed" style="color:var(--text-muted)">
+        Paste any TikTok or Instagram link to extract original HD video or pristine 320kbps MP3 audio in seconds.
       </p>
     </div>
 
-    <!-- Input Form Card -->
-    <div class="glass-panel gradient-border-box rounded-2xl p-3.5 sm:p-5 mb-10 shadow-2xl relative">
+    <!-- ── Input Form ─────────────────────────────────────────── -->
+    <div class="glass-panel rounded-2xl p-3.5 sm:p-5 mb-6 shadow-2xl relative" style="border:1px solid rgba(0,242,254,0.2)">
       <form id="analyzeForm" class="flex flex-col sm:flex-row gap-3">
         <div class="relative flex-1">
-          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
             </svg>
           </div>
-          <input 
-            type="url" 
-            id="urlInput"
-            required
+          <input type="url" id="urlInput" required
             placeholder="Paste TikTok or Instagram link here..."
-            class="w-full pl-11 pr-24 py-4 rounded-xl glass-input text-white placeholder-gray-500 focus:outline-none text-sm sm:text-base font-medium"
-          >
-          <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center space-x-1.5">
-            <button 
-              type="button" 
-              id="clearBtn"
-              title="Clear text"
-              class="hidden p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
+            class="w-full pl-11 pr-24 py-4 rounded-xl glass-input text-sm sm:text-base font-medium">
+          <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1.5">
+            <button type="button" id="clearBtn" class="hidden p-2 hover:text-white rounded-lg hover:bg-white/10 transition" style="color:var(--text-muted)">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-            <button 
-              type="button" 
-              id="pasteBtn"
-              class="px-3 py-1.5 text-xs font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/30 rounded-lg hover:bg-cyan-900/80 transition flex items-center gap-1.5 active:scale-95 shadow-sm"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-              </svg>
-              <span>Paste</span>
+            <button type="button" id="pasteBtn" class="px-3 py-1.5 text-xs font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/30 rounded-lg hover:bg-cyan-900 transition flex items-center gap-1.5 active:scale-95 btn-shine ripple-container">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              Paste
             </button>
           </div>
         </div>
-
-        <!-- Submit Button -->
-        <button 
-          type="submit" 
-          id="submitBtn"
-          class="btn-shine sm:w-auto px-8 py-4 rounded-xl font-bold text-white bg-gradient-to-r from-cyan-500 via-blue-500 to-rose-500 hover:from-cyan-400 hover:to-rose-400 active:scale-[0.98] transition duration-300 shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2.5 cursor-pointer"
-        >
-          <span id="btnText" class="text-base font-bold tracking-wide">Analyze / Fetch</span>
+        <button type="submit" id="submitBtn" class="btn-shine ripple-container sm:w-auto px-8 py-4 rounded-xl font-bold text-white bg-gradient-to-r from-cyan-500 via-blue-500 to-rose-500 hover:from-cyan-400 hover:to-rose-400 active:scale-[0.98] transition duration-300 shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2.5 cursor-pointer">
+          <span id="btnText" class="text-base font-bold">Analyze / Fetch</span>
           <svg id="btnSpinner" class="hidden animate-spin w-5 h-5 text-white" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
         </button>
       </form>
-
-      <!-- Quick Tips -->
-      <div class="mt-3.5 flex flex-wrap items-center justify-between text-xs text-gray-400 px-1 gap-2">
+      <div class="mt-3.5 flex flex-wrap items-center justify-between text-xs gap-2" style="color:var(--text-muted)">
         <div class="flex items-center gap-1.5">
-          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <span>Supports TikTok & Instagram Videos / Reels</span>
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          TikTok Videos & Instagram Reels / Posts
         </div>
         <div class="flex items-center gap-2">
-          <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping inline-block"></span>
           <span class="text-cyan-300 font-semibold">100% Watermark Free</span>
         </div>
       </div>
     </div>
 
-    <!-- Error Alert Banner -->
-    <div id="errorBox" class="hidden mb-8 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm flex items-start gap-3 backdrop-blur-md animate-card-in">
-      <svg class="w-5 h-5 text-rose-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-      </svg>
-      <div class="flex-1">
-        <span class="font-bold block text-base" id="errorTitle">Extraction Error</span>
-        <span id="errorMessage" class="text-rose-200/90 text-xs sm:text-sm mt-0.5 block">Something went wrong. Please check your link and retry.</span>
-      </div>
-      <button onclick="document.getElementById('errorBox').classList.add('hidden')" class="text-rose-400 hover:text-white p-1">
-        ✕
+    <!-- ── Batch Downloader ──────────────────────────────────── -->
+    <div class="glass-panel rounded-2xl mb-6 overflow-hidden border border-white/5">
+      <button id="batchToggleBtn" class="w-full flex items-center justify-between p-4 sm:p-5 text-left cursor-pointer hover:bg-white/5 transition">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          </div>
+          <div>
+            <span class="font-bold text-sm" style="color:var(--text)">Batch Downloader</span>
+            <span class="text-xs block" style="color:var(--text-muted)">Paste multiple links, download all at once</span>
+          </div>
+        </div>
+        <svg id="batchChevron" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </button>
+      <div id="batchPanel" class="hidden border-t border-white/5 p-4 sm:p-5 space-y-4">
+        <textarea id="batchUrls" rows="4"
+          placeholder="Paste one URL per line (max 5)..."
+          class="w-full glass-input rounded-xl p-3 text-sm font-medium resize-none focus:outline-none placeholder-gray-500"></textarea>
+        <div class="flex items-center gap-3">
+          <select id="batchFormat" class="flex-1 glass-input rounded-lg px-3 py-2 text-sm cursor-pointer focus:outline-none">
+            <option value="mp4">🎬 Video (MP4)</option>
+            <option value="mp3">🎵 Audio (MP3)</option>
+          </select>
+          <button id="batchStartBtn" class="btn-shine ripple-container flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm transition shadow-lg cursor-pointer">
+            Start Batch Queue
+          </button>
+        </div>
+        <div id="batchQueueList" class="hidden space-y-2"><!-- populated dynamically --></div>
+      </div>
     </div>
 
-    <!-- Preview & Action Card (Hidden initially) -->
+    <!-- ── Error Box ─────────────────────────────────────────── -->
+    <div id="errorBox" class="hidden mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm flex items-start gap-3 animate-card-in">
+      <svg class="w-5 h-5 text-rose-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      <div class="flex-1">
+        <span id="errorTitle" class="font-bold block text-base">Error</span>
+        <span id="errorMessage" class="text-rose-200/90 text-xs sm:text-sm mt-0.5 block">Something went wrong.</span>
+      </div>
+      <button onclick="document.getElementById('errorBox').classList.add('hidden')" class="text-rose-400 hover:text-white p-1">✕</button>
+    </div>
+
+    <!-- ── Skeleton Card ─────────────────────────────────────── -->
+    <div id="skeletonCard" class="hidden glass-panel rounded-2xl p-5 sm:p-7 mb-10 border border-white/10">
+      <div class="flex flex-col md:flex-row gap-6">
+        <div class="skeleton w-full md:w-56 max-w-[240px] aspect-[9/14] rounded-xl shrink-0"></div>
+        <div class="flex-1 space-y-4">
+          <div class="skeleton h-5 w-32 rounded-lg"></div>
+          <div class="skeleton h-7 w-3/4 rounded-lg"></div>
+          <div class="grid grid-cols-4 gap-2.5">
+            <div class="skeleton h-14 rounded-xl"></div>
+            <div class="skeleton h-14 rounded-xl"></div>
+            <div class="skeleton h-14 rounded-xl"></div>
+            <div class="skeleton h-14 rounded-xl"></div>
+          </div>
+          <div class="skeleton h-12 rounded-xl"></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="skeleton h-14 rounded-xl"></div>
+            <div class="skeleton h-14 rounded-xl"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Preview Card ──────────────────────────────────────── -->
     <div id="previewCard" class="hidden glass-panel rounded-2xl p-5 sm:p-7 mb-12 border border-white/10 shadow-2xl animate-card-in">
       <div class="flex flex-col md:flex-row gap-6 items-center md:items-start">
-        
-        <!-- Left Column: Video Thumbnail with Duration Badge -->
-        <div class="relative w-full md:w-56 shrink-0 aspect-[9/14] sm:aspect-[9/13] max-w-[240px] rounded-xl overflow-hidden shadow-2xl border border-white/15 group bg-black/40">
-          <img 
-            id="videoThumbnail" 
-            src="" 
-            alt="Video Thumbnail" 
-            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            loading="lazy"
-          >
+
+        <!-- Thumbnail -->
+        <div class="relative w-full md:w-56 shrink-0 aspect-[9/14] max-w-[240px] rounded-xl overflow-hidden shadow-2xl border border-white/15 group bg-black/40">
+          <img id="videoThumbnail" src="" alt="Thumbnail" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy">
           <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
-          
-          <!-- Duration badge -->
           <div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md text-white text-xs font-mono font-semibold flex items-center gap-1.5 border border-white/10">
-            <svg class="w-3.5 h-3.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-            </svg>
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
             <span id="videoDuration">00:00</span>
           </div>
-
-          <!-- Quality Badge overlay -->
-          <div class="absolute top-3 right-3 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-cyan-500/30 to-blue-500/30 backdrop-blur-md text-cyan-300 text-[10px] font-extrabold tracking-wider uppercase border border-cyan-500/40">
+          <div id="platformBadge" class="absolute top-3 right-3 px-2.5 py-0.5 rounded-full backdrop-blur-md text-[10px] font-extrabold tracking-wider uppercase border border-cyan-500/40 bg-cyan-500/20 text-cyan-300">
             Original Stream
           </div>
         </div>
 
-        <!-- Right Column: Details & Download Actions -->
-        <div class="flex-1 w-full space-y-5">
-          
-          <!-- Author & Title -->
+        <!-- Details -->
+        <div class="flex-1 w-full space-y-4">
           <div>
             <div class="flex items-center gap-2 mb-2">
-              <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-rose-500 p-[1.5px] shadow-sm">
-                <div class="w-full h-full bg-black rounded-full flex items-center justify-center text-xs font-black text-cyan-300 uppercase" id="authorAvatarChar">
-                  T
-                </div>
+              <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-rose-500 p-[1.5px]">
+                <div class="w-full h-full bg-black rounded-full flex items-center justify-center text-xs font-black text-cyan-300 uppercase" id="authorAvatarChar">T</div>
               </div>
-              <span id="videoUploader" class="text-sm font-bold text-gray-200">@creator</span>
-              <svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-              </svg>
+              <span id="videoUploader" class="text-sm font-bold" style="color:var(--text)">@creator</span>
+              <svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
             </div>
-            <h2 id="videoTitle" class="text-lg sm:text-xl font-extrabold text-white line-clamp-2 leading-snug">
-              Video Title
-            </h2>
+            <h2 id="videoTitle" class="text-lg sm:text-xl font-extrabold line-clamp-2 leading-snug" style="color:var(--text)">Video Title</h2>
           </div>
 
-          <!-- Technical Specs Grid -->
+          <!-- Specs -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center transition hover:border-cyan-500/40">
+            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center hover:border-cyan-500/40 transition">
               <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Resolution</span>
-              <div id="videoResolution" class="text-sm font-bold text-cyan-300">
-                1080 x 1920
-              </div>
+              <div id="videoResolution" class="text-sm font-bold text-cyan-300">Original HD</div>
             </div>
-
-            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center transition hover:border-rose-500/40">
+            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center hover:border-rose-500/40 transition">
               <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Frame Rate</span>
-              <div id="videoFps" class="text-sm font-bold text-rose-300">
-                60 FPS
-              </div>
+              <div id="videoFps" class="text-sm font-bold text-rose-300">Original FPS</div>
             </div>
-
-            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center transition hover:border-emerald-500/40">
+            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center hover:border-emerald-500/40 transition">
               <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Watermark</span>
-              <div class="text-sm font-bold text-emerald-300">
-                Removed
-              </div>
+              <div class="text-sm font-bold text-emerald-300">Removed ✓</div>
             </div>
-
-            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center transition hover:border-amber-500/40">
-              <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Audio Bitrate</span>
-              <div class="text-sm font-bold text-amber-300">
-                320 kbps
-              </div>
+            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center hover:border-amber-500/40 transition">
+              <span class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Audio</span>
+              <div class="text-sm font-bold text-amber-300">320 kbps</div>
             </div>
           </div>
 
-          <!-- Download Action Buttons -->
-          <div class="pt-2 space-y-3">
-            <div class="text-xs font-bold text-gray-300 uppercase tracking-wider">Select Download Format</div>
-            
-            <!-- Quality Selector -->
-            <div id="qualitySelectorGroup" class="p-3 rounded-xl bg-white/5 border border-white/10">
-              <label for="qualitySelect" class="block text-xs font-bold text-gray-300 mb-1.5 flex items-center justify-between">
-                <span class="flex items-center gap-1.5">
-                  <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-                  </svg>
-                  Video Quality / جودة الفيديو
-                </span>
-                <span class="text-[10px] text-cyan-400 font-semibold">Native HD Stream</span>
-              </label>
-              <select id="qualitySelect" class="w-full bg-[#05070A] border border-white/20 rounded-lg px-3 py-2 text-sm text-white font-medium focus:outline-none focus:border-cyan-400 transition cursor-pointer">
-                <option value="best">Original Quality (HD)</option>
-              </select>
+          <!-- Mini Player -->
+          <div id="miniPlayerWrapper" class="hidden">
+            <video id="miniPlayer" controls controlsList="nodownload" preload="none">
+              <source id="miniPlayerSrc" src="" type="video/mp4">
+            </video>
+            <div class="flex items-center gap-2 mt-1.5 text-xs text-gray-400">
+              <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Preview only — stream link may expire. Click Download for permanent copy.
+            </div>
+          </div>
+
+          <!-- Download Format Selection -->
+          <div class="space-y-3 pt-1">
+            <div class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-muted)">Select Download Format</div>
+
+            <!-- Quality + Audio Quality Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div id="qualitySelectorGroup" class="p-3 rounded-xl bg-white/5 border border-white/10">
+                <label class="block text-xs font-bold mb-1.5 flex items-center gap-1.5" style="color:var(--text-muted)">
+                  <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  Video Quality
+                </label>
+                <select id="qualitySelect" class="w-full glass-input rounded-lg px-3 py-2 text-sm font-medium focus:outline-none cursor-pointer">
+                  <option value="best">Original Quality (HD)</option>
+                </select>
+              </div>
+              <div class="p-3 rounded-xl bg-white/5 border border-white/10">
+                <label class="block text-xs font-bold mb-1.5 flex items-center gap-1.5" style="color:var(--text-muted)">
+                  <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                  MP3 Audio Bitrate
+                </label>
+                <select id="audioQualitySelect" class="w-full glass-input rounded-lg px-3 py-2 text-sm font-medium focus:outline-none cursor-pointer">
+                  <option value="320">320 kbps (Studio Quality)</option>
+                  <option value="192">192 kbps (High Quality)</option>
+                  <option value="128">128 kbps (Standard)</option>
+                </select>
+              </div>
             </div>
 
+            <!-- Download Buttons -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              
-              <!-- Video MP4 Download Button -->
-              <button 
-                id="downloadVideoBtn"
-                class="btn-shine group relative w-full p-4 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold transition duration-300 glow-cyan active:scale-[0.98] flex items-center justify-between overflow-hidden cursor-pointer"
-              >
+              <button id="downloadVideoBtn" class="btn-shine ripple-container group relative w-full p-4 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold transition duration-300 glow-cyan active:scale-[0.98] flex items-center justify-between overflow-hidden cursor-pointer">
                 <div class="flex items-center gap-3">
                   <div class="p-2.5 rounded-lg bg-black/30 group-hover:scale-110 transition duration-300">
-                    <svg class="w-6 h-6 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                    </svg>
+                    <svg class="w-6 h-6 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                   </div>
                   <div class="text-left">
-                    <div class="text-base font-extrabold flex items-center gap-1.5">
-                      Download Video
-                      <span class="text-[10px] px-1.5 py-0.5 bg-black/40 rounded font-bold text-cyan-200 border border-cyan-400/30">MP4</span>
-                    </div>
+                    <div class="font-extrabold flex items-center gap-1.5">Download Video <span class="text-[10px] px-1.5 py-0.5 bg-black/40 rounded font-bold text-cyan-200 border border-cyan-400/30">MP4</span></div>
                     <div class="text-xs font-medium text-cyan-100/80">Full Resolution with Audio</div>
                   </div>
                 </div>
-                <svg class="w-5 h-5 text-white/80 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
+                <svg class="w-5 h-5 text-white/80 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
               </button>
-
-              <!-- Audio MP3 Download Button -->
-              <button 
-                id="downloadAudioBtn"
-                class="btn-shine group relative w-full p-4 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold transition duration-300 glow-pink active:scale-[0.98] flex items-center justify-between overflow-hidden cursor-pointer"
-              >
+              <button id="downloadAudioBtn" class="btn-shine ripple-container group relative w-full p-4 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold transition duration-300 glow-pink active:scale-[0.98] flex items-center justify-between overflow-hidden cursor-pointer">
                 <div class="flex items-center gap-3">
                   <div class="p-2.5 rounded-lg bg-black/30 group-hover:scale-110 transition duration-300">
-                    <svg class="w-6 h-6 text-rose-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
-                    </svg>
+                    <svg class="w-6 h-6 text-rose-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
                   </div>
                   <div class="text-left">
-                    <div class="text-base font-extrabold flex items-center gap-1.5">
-                      Download Audio
-                      <span class="text-[10px] px-1.5 py-0.5 bg-black/40 rounded font-bold text-rose-200 border border-rose-400/30">MP3</span>
-                    </div>
-                    <div class="text-xs font-medium text-rose-100/80">320kbps High Fidelity</div>
+                    <div class="font-extrabold flex items-center gap-1.5">Download Audio <span class="text-[10px] px-1.5 py-0.5 bg-black/40 rounded font-bold text-rose-200 border border-rose-400/30">MP3</span></div>
+                    <div class="text-xs font-medium text-rose-100/80" id="audioQualityLabel">320kbps High Fidelity</div>
                   </div>
                 </div>
-                <svg class="w-5 h-5 text-white/80 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
+                <svg class="w-5 h-5 text-white/80 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
               </button>
-
             </div>
 
-            <!-- Download Status Notification Container -->
-            <div id="downloadStatus" class="hidden p-3.5 rounded-xl bg-cyan-950/60 border border-cyan-500/40 text-cyan-200 text-xs flex items-center gap-3 backdrop-blur-md">
-              <svg class="animate-spin w-4 h-4 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span id="downloadStatusText" class="font-semibold">Preparing media stream on server...</span>
+            <!-- Extra Actions Row: Copy Link + QR -->
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <button id="copyLinkBtn" class="btn-shine ripple-container flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/40 text-sm font-bold transition cursor-pointer" style="color:var(--text)">
+                <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Copy Stream URL
+              </button>
+              <button id="qrCodeBtn" class="btn-shine ripple-container flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/40 text-sm font-bold transition cursor-pointer" style="color:var(--text)">
+                <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                Share QR Code
+              </button>
             </div>
 
+            <!-- Progress Bar (Download) -->
+            <div id="downloadStatus" class="hidden space-y-2">
+              <div class="flex items-center justify-between text-xs font-semibold" style="color:var(--text-muted)">
+                <span id="downloadStatusText">Preparing download...</span>
+                <span id="progressPercent" class="text-cyan-400">0%</span>
+              </div>
+              <div id="progressBarOuter">
+                <div id="progressBarInner"></div>
+              </div>
+            </div>
           </div>
-
         </div>
       </div>
     </div>
 
-    <!-- Creator Spotlight Section -->
+    <!-- Download History Panel -->
+    <div id="historyPanelWrapper" class="hidden glass-panel rounded-2xl mb-10 overflow-hidden border border-rose-500/20 animate-card-in">
+      <div class="flex items-center justify-between p-4 sm:p-5 border-b border-white/10">
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="font-bold" style="color:var(--text)">Download History</span>
+          <span class="text-xs text-gray-400">Last 10 analyzed videos</span>
+        </div>
+        <button id="clearHistoryBtn" class="text-xs text-rose-400 hover:text-rose-300 font-semibold transition">Clear All</button>
+      </div>
+      <div id="historyPanel" class="p-4 sm:p-5 space-y-3"><!-- populated dynamically --></div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+      <div class="glass-panel rounded-2xl p-6 hover:border-cyan-500/40 transition duration-300">
+        <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2" style="color:var(--text)">Original Resolution & FPS</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--text-muted)">Zero re-compression. Extract the exact native stream, preserving crisp 1080p resolution and smooth motion.</p>
+      </div>
+      <div class="glass-panel rounded-2xl p-6 hover:border-rose-500/40 transition duration-300">
+        <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2" style="color:var(--text)">Studio Quality Audio</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--text-muted)">Choose your MP3 bitrate: 128kbps, 192kbps, or 320kbps studio quality for perfect offline playback.</p>
+      </div>
+      <div class="glass-panel rounded-2xl p-6 hover:border-emerald-500/40 transition duration-300">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2" style="color:var(--text)">Batch & History</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--text-muted)">Queue multiple links for sequential download, and browse your full analysis history with thumbnail previews.</p>
+      </div>
+    </div>
+
+    <!-- Creator Section -->
     <div id="about-creator" class="glass-panel rounded-2xl p-6 sm:p-8 mb-16 border border-cyan-500/30 shadow-2xl relative overflow-hidden">
       <div class="absolute -top-24 -right-24 w-60 h-60 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
       <div class="flex flex-col md:flex-row items-center gap-6 sm:gap-8">
-        
-        <!-- Creator Avatar Image -->
         <div class="relative shrink-0">
           <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-2xl p-[3px] bg-gradient-to-tr from-cyan-400 via-blue-500 to-rose-500 shadow-2xl avatar-glow overflow-hidden">
-            <img 
-              src="/static/ahmed_nadi.jpg" 
-              alt="Ahmed Nadi - Developer & Creator" 
-              class="w-full h-full object-cover rounded-xl"
-            >
+            <img src="/static/ahmed_nadi.jpg" alt="Ahmed Nadi" class="w-full h-full object-cover rounded-xl">
           </div>
-          <span class="absolute -bottom-2 -right-2 px-2.5 py-0.5 bg-cyan-500 text-black text-[10px] font-black tracking-wider uppercase rounded-full shadow-lg">
-            CREATOR
-          </span>
+          <span class="absolute -bottom-2 -right-2 px-2.5 py-0.5 bg-cyan-500 text-black text-[10px] font-black tracking-wider uppercase rounded-full shadow-lg">CREATOR</span>
         </div>
-
-        <!-- Creator Bio -->
         <div class="text-center md:text-left space-y-2.5 flex-1">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-bold text-cyan-300">
-            <span>💻 Lead Developer & Designer</span>
+            💻 Lead Developer & Designer
           </div>
-          <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Ahmed Nadi
-          </h2>
-          <p class="text-gray-300 text-sm sm:text-base leading-relaxed">
-            مرحباً بك في أداة تنزيل الفيديوهات والصوتيات الفائقة. تم تطوير هذه الأداة بواسطة **أحمد نادي** لتوفير تجربة استخراج وسائط فائقة السرعة، بدون علامات مائية وبواجهة ثلاثية الأبعاد سلسة وحديثة.
+          <h2 class="text-2xl sm:text-3xl font-black tracking-tight" style="color:var(--text)">Ahmed Nadi</h2>
+          <p class="text-sm sm:text-base leading-relaxed" style="color:var(--text-muted)">
+            مرحباً بك في أداة تنزيل الفيديوهات الاحترافية. تم تطوير هذه الأداة بواسطة <strong class="text-white">أحمد نادي</strong> بمحرك ثلاثي الأبعاد تفاعلي، واجهة زجاجية عصرية، وكل المميزات التي تحتاجها.
           </p>
-          <div class="pt-1 flex flex-wrap items-center justify-center md:justify-start gap-3 text-xs text-gray-400">
+          <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1 text-xs" style="color:var(--text-muted)">
             <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">🚀 FastAPI & Python</span>
-            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">🎨 Three.js 3D WebGL</span>
-            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">⚡ High Bitrate 320kbps MP3</span>
+            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">🪼 Three.js Jellyfish 3D</span>
+            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">⚡ 128/192/320kbps MP3</span>
+            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">📋 Batch Downloader</span>
           </div>
         </div>
-
       </div>
-    </div>
-
-    <!-- Feature Highlights -->
-    <div id="features" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-      
-      <!-- Feature 1 -->
-      <div class="glass-panel rounded-2xl p-6 hover:border-cyan-500/40 transition duration-300">
-        <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mb-4 shadow-lg shadow-cyan-500/10">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-          </svg>
-        </div>
-        <h3 class="text-lg font-bold text-white mb-2">Original Resolution & FPS</h3>
-        <p class="text-gray-400 text-sm leading-relaxed">
-          Zero re-compression. We extract the exact native stream uploaded by the creator, keeping crisp 1080p resolution and smooth motion.
-        </p>
-      </div>
-
-      <!-- Feature 2 -->
-      <div class="glass-panel rounded-2xl p-6 hover:border-rose-500/40 transition duration-300">
-        <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mb-4 shadow-lg shadow-rose-500/10">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
-          </svg>
-        </div>
-        <h3 class="text-lg font-bold text-white mb-2">Studio 320kbps Audio</h3>
-        <p class="text-gray-400 text-sm leading-relaxed">
-          Love the sound or music? Grab the isolated audio track encoded at high bitrate 320kbps MP3 for crisp playback everywhere.
-        </p>
-      </div>
-
-      <!-- Feature 3 -->
-      <div class="glass-panel rounded-2xl p-6 hover:border-emerald-500/40 transition duration-300">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/10">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-          </svg>
-        </div>
-        <h3 class="text-lg font-bold text-white mb-2">Automatic Clean-up</h3>
-        <p class="text-gray-400 text-sm leading-relaxed">
-          Privacy-first architecture. All media is temporarily streamed to your browser and automatically erased from server storage immediately.
-        </p>
-      </div>
-
     </div>
 
   </main>
 
   <!-- Footer -->
-  <footer class="w-full border-t border-white/10 py-8 text-center text-xs text-gray-400 glass-panel mt-12 relative z-10">
+  <footer class="w-full border-t border-white/10 py-8 text-center text-xs glass-panel mt-12 relative z-10" style="color:var(--text-muted)">
     <div class="max-w-6xl mx-auto px-4 space-y-2">
-      <div class="flex items-center justify-center gap-2 text-white font-bold text-sm mb-1">
+      <div class="flex items-center justify-center gap-2 font-bold text-sm mb-1" style="color:var(--text)">
         <img src="/static/ahmed_nadi.jpg" class="w-6 h-6 rounded-full object-cover border border-cyan-400" alt="Ahmed Nadi">
-        <span>Ahmed Nadi Media Downloader © 2026</span>
+        Ahmed Nadi Media Downloader v6.0 © 2026
       </div>
-      <p class="text-gray-400 font-semibold">
-        Engineered with FastAPI, Three.js 3D & Tailwind CSS by Ahmed Nadi.
-      </p>
+      <p>Engineered with FastAPI, Three.js Jellyfish 3D, QR Code & Batch Downloader by Ahmed Nadi.</p>
     </div>
   </footer>
 
-  <!-- Notification Toast -->
+  <!-- Toast -->
   <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
-    <div class="px-5 py-3.5 rounded-2xl glass-panel border border-cyan-500/40 shadow-2xl text-white text-sm font-semibold flex items-center gap-3">
+    <div class="px-5 py-3.5 rounded-2xl glass-panel border border-cyan-500/40 shadow-2xl font-semibold flex items-center gap-3" style="color:var(--text)">
       <span id="toastIcon" class="text-lg">✨</span>
-      <span id="toastMessage">Notification message</span>
+      <span id="toastMessage">Notification</span>
+    </div>
+  </div>
+
+  <!-- QR Modal -->
+  <div id="qrModal">
+    <div class="glass-panel rounded-2xl p-6 max-w-xs w-full mx-4 space-y-4 border border-purple-500/30 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-white">Share via QR Code</h3>
+        <button id="qrModalClose" class="text-gray-400 hover:text-white p-1">✕</button>
+      </div>
+      <div id="qrBox" class="flex items-center justify-center rounded-xl overflow-hidden"></div>
+      <p class="text-xs text-center text-gray-400">Scan with your phone to open the original post</p>
     </div>
   </div>
 
   <!-- Scripts -->
-  <script src="/static/bg3d.js?v=5.4.0"></script>
-  <script src="/static/app.js?v=5.4.0"></script>
+  <script src="/static/bg3d.js?v=6.0.0"></script>
+  <script src="/static/app.js?v=6.0.0"></script>
 </body>
 </html>

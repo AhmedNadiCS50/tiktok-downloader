@@ -62,7 +62,10 @@ STATIC_DIR   = BASE_DIR / "static"
 DOWNLOAD_DIR = Path(tempfile.gettempdir()) / "media_downloads"
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="Ahmed Nadi Media Downloader", version="5.4.0")
+# In-memory stats counter (resets on server restart)
+_stats = {"downloads": 0, "analyses": 0}
+
+app = FastAPI(title="Ahmed Nadi Media Downloader", version="6.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -187,10 +190,83 @@ def _del(path: str):
 async def health():
     return {
         "status": "ok",
-        "version": "5.2.0",
+        "version": "6.0.0",
         "platforms": ["tiktok", "instagram", "youtube"],
-        "features": ["quality_selection", "playlists", "bot_bypass"]
+        "features": ["quality_selection", "playlists", "bot_bypass", "audio_quality", "stream_url", "stats"]
     }
+
+
+# ── Stats ──────────────────────────────────────────────────────────────────────
+
+@app.get("/api/stats")
+async def get_stats():
+    return {
+        "status": "ok",
+        "downloads": _stats["downloads"],
+        "analyses": _stats["analyses"]
+    }
+
+
+# ── Stream URL (for mini player & copy link) ───────────────────────────────────
+
+@app.get("/api/streamurl")
+async def get_stream_url(url: str = Query(...)):
+    raw = url.strip()
+    platform = detect_platform(raw)
+    if not platform:
+        raise HTTPException(400, "رابط غير مدعوم.")
+
+    loop = asyncio.get_running_loop()
+
+    if platform == "instagram":
+        shortcode = extract_instagram_shortcode(raw)
+        if not shortcode:
+            raise HTTPException(400, "رابط Instagram غير صالح.")
+        try:
+            loader = get_instaloader()
+            post = await loop.run_in_executor(
+                None, lambda: instaloader.Post.from_shortcode(loader.context, shortcode)
+            )
+            if not post.video_url:
+                raise HTTPException(404, "لا يحتوي المنشور على فيديو.")
+            return {"status": "ok", "stream_url": post.video_url, "platform": "instagram"}
+        except Exception as e:
+            raise HTTPException(500, f"فشل جلب رابط Instagram: {e}")
+
+    opts: Dict[str, Any] = {
+        "skip_download": True,
+        "quiet": True,
+        "no_warnings": True,
+        "socket_timeout": 15,
+    }
+    if platform == "youtube":
+        opts["extractor_args"] = YOUTUBE_EXTRACTOR_ARGS
+    if DEFAULT_IMPERSONATE and platform == "tiktok":
+        opts["impersonate"] = DEFAULT_IMPERSONATE
+
+    try:
+        info = await loop.run_in_executor(None, lambda: _ydl_extract(raw, opts))
+    except Exception as e:
+        raise HTTPException(500, f"فشل جلب رابط البث: {e}")
+
+    formats = info.get("formats") or []
+    stream_url = None
+    best_height = 0
+    for f in formats:
+        furl = f.get("url")
+        fh   = f.get("height") or 0
+        fvc  = f.get("vcodec") or ""
+        if furl and fh > best_height and fvc != "none":
+            stream_url = furl
+            best_height = fh
+
+    if not stream_url:
+        stream_url = info.get("url")
+
+    if not stream_url:
+        raise HTTPException(404, "لم يُعثر على رابط بث مباشر.")
+
+    return {"status": "ok", "stream_url": stream_url, "platform": platform, "title": info.get("title", "Video")}
 
 
 # ── Analyze ────────────────────────────────────────────────────────────────────
@@ -211,6 +287,7 @@ async def analyze(req: AnalyzeRequest):
     if not platform:
         raise HTTPException(400, "رابط غير مدعوم. يُرجى إدخال رابط TikTok أو Instagram أو YouTube.")
 
+    _stats["analyses"] += 1
     loop = asyncio.get_running_loop()
 
     # ── 1. YouTube Playlist ──────────────────────────────────────────────────
@@ -423,9 +500,10 @@ def _ydl_download(url: str, opts: dict):
 @app.get("/api/download")
 async def download(
     background_tasks: BackgroundTasks,
-    url: str               = Query(...),
-    format: str            = Query("mp4", pattern="^(mp4|mp3)$"),
-    quality: Optional[str] = Query("best"),
+    url:           str            = Query(...),
+    format:        str            = Query("mp4", pattern="^(mp4|mp3)$"),
+    quality:       Optional[str]  = Query("best"),
+    audio_quality: Optional[str]  = Query("320"),   # 128 | 192 | 320 kbps
 ):
     raw = url.strip()
     platform = detect_platform(raw)
@@ -531,11 +609,12 @@ async def download(
         opts["merge_output_format"] = "mp4"
     else:
         opts["format"] = "bestaudio/best"
+        aq = audio_quality if audio_quality in ("128", "192", "320") else "320"
         if ffmpeg:
             opts["postprocessors"] = [{
                 "key":              "FFmpegExtractAudio",
                 "preferredcodec":   "mp3",
-                "preferredquality": "320",
+                "preferredquality": aq,
             }]
 
     try:
@@ -563,6 +642,7 @@ async def download(
     ascii_fn  = re.sub(r"[^\x00-\x7F]+", "_", filename).strip("_") or "media_file"
     enc_fn    = quote(filename)
 
+    _stats["downloads"] += 1
     background_tasks.add_task(_del, file_path)
 
     return FileResponse(
