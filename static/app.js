@@ -264,8 +264,8 @@ function renderPlaylist(data) {
   playlistCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ── Download Trigger ────────────────────────────────────────────────────────
-function triggerDownload(format, targetUrl = null, customQuality = null) {
+// ── Download Trigger (Safe Fetch Blob) ──────────────────────────────────────
+async function triggerDownload(format, targetUrl = null, customQuality = null) {
   const url = targetUrl || (currentVideoData ? currentVideoData.original_url : null);
   if (!url) {
     showError('لا يوجد رابط', 'أدخل أو حلّل رابط فيديو أولاً.');
@@ -275,19 +275,54 @@ function triggerDownload(format, targetUrl = null, customQuality = null) {
   const quality = customQuality || (qualitySelect ? qualitySelect.value : 'best');
   const label = format === 'mp4' ? `الفيديو (MP4 ${quality !== 'best' ? quality + 'p' : ''})` : 'الصوت (MP3)';
   
-  showToast(`جارٍ تجهيز ${label} وسيبدأ التحميل بجهازك مباشرة... ⏳`, '📥', 10000);
+  hideError();
+  setDownloadLoading(true, `جارٍ تجهيز وتحميل ${label} على السيرفر... ⏳`);
+  showToast(`جارٍ تحضير ${label}... ⏳`, '📥', 10000);
 
   const downloadUrl = `${API_BASE}/api/download?url=${encodeURIComponent(url)}&format=${format}&quality=${quality}`;
 
-  // Start file download directly in browser
-  const a = document.createElement('a');
-  a.href = downloadUrl;
-  a.setAttribute('download', '');
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    try { document.body.removeChild(a); } catch (_) {}
-  }, 1000);
+  try {
+    const res = await fetch(downloadUrl);
+    if (!res.ok) {
+      let data = {};
+      try {
+        const text = await res.text();
+        if (text) data = JSON.parse(text);
+      } catch (_) {}
+      throw new Error(data.detail || `تعذّر التنزيل من السيرفر (كود الخطأ: ${res.status})`);
+    }
+
+    // Success! Read media blob and trigger safe file download
+    const blob = await res.blob();
+    
+    // Extract filename from header if provided
+    let filename = `media_${Date.now()}.${format}`;
+    const cd = res.headers.get('Content-Disposition') || res.headers.get('content-disposition');
+    if (cd) {
+      const fnMatch = cd.match(/filename\*=UTF-8''([^;]+)/i) || cd.match(/filename="?([^";]+)"?/i);
+      if (fnMatch && fnMatch[1]) {
+        filename = decodeURIComponent(fnMatch[1]);
+      }
+    }
+
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      try { document.body.removeChild(a); } catch (_) {}
+      URL.revokeObjectURL(blobUrl);
+    }, 2000);
+
+    showToast('تم تحميل الملف بنجاح! 🚀', '✅');
+  } catch (err) {
+    console.error('Download error:', err);
+    showError('فشل التحميل', err.message || 'حدث خطأ أثناء معالجة ملف التحميل.');
+  } finally {
+    setDownloadLoading(false);
+  }
 }
 
 // Make triggerDownload available globally for inline onclick handlers

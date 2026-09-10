@@ -55,13 +55,14 @@ STATIC_DIR   = BASE_DIR / "static"
 DOWNLOAD_DIR = Path(tempfile.gettempdir()) / "media_downloads"
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="Media Downloader - TikTok, Instagram & YouTube", version="5.0.0")
+app = FastAPI(title="Media Downloader - TikTok, Instagram & YouTube", version="5.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
 
 _insta_loader: Optional[instaloader.Instaloader] = None
@@ -85,17 +86,36 @@ def get_instaloader() -> instaloader.Instaloader:
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def get_ffmpeg() -> Optional[str]:
+    """
+    Finds ffmpeg executable or safely copies it to temp directory on read-only filesystems (like Vercel AWS Lambda).
+    """
     try:
         import imageio_ffmpeg
         exe = imageio_ffmpeg.get_ffmpeg_exe()
         if os.path.isfile(exe):
+            # Check if already executable
+            if os.access(exe, os.X_OK):
+                return exe
+            # Try chmod directly
             try:
                 os.chmod(exe, 0o755)
+                return exe
             except Exception:
                 pass
-            return exe
-    except Exception:
-        pass
+            # Read-only filesystem (Vercel Lambda) -> copy to /tmp/ffmpeg_bin and chmod there
+            tmp_ffmpeg = os.path.join(tempfile.gettempdir(), "ffmpeg_bin")
+            if sys.platform == "win32":
+                tmp_ffmpeg += ".exe"
+            try:
+                if not os.path.isfile(tmp_ffmpeg) or os.path.getsize(tmp_ffmpeg) != os.path.getsize(exe):
+                    shutil.copy2(exe, tmp_ffmpeg)
+                os.chmod(tmp_ffmpeg, 0o755)
+                return tmp_ffmpeg
+            except Exception as e:
+                logger.warning(f"Copy ffmpeg to tmp failed: {e}")
+                return exe
+    except Exception as e:
+        logger.warning(f"get_ffmpeg error: {e}")
     return None
 
 def sanitize(name: str) -> str:
@@ -160,7 +180,7 @@ def _del(path: str):
 async def health():
     return {
         "status": "ok",
-        "version": "5.0.0",
+        "version": "5.1.0",
         "platforms": ["tiktok", "instagram", "youtube"],
         "features": ["quality_selection", "playlists"]
     }
@@ -219,7 +239,7 @@ async def analyze(req: AnalyzeRequest):
                 "duration": e.get("duration"),
                 "duration_formatted": fmt_duration(e.get("duration")),
                 "thumbnail": thumb,
-                "url": f"https://www.youtube.com/watch?v={vid_id}" if vid_id and not vid_id.startswith("http") else e.get("url"),
+                "url": f"https://www.youtube.com/watch?v={vid_id}" if vid_id and not str(vid_id).startswith("http") else e.get("url"),
             })
 
         return {
@@ -483,7 +503,7 @@ async def download(
         "quiet":          True,
         "no_warnings":    True,
         "outtmpl":        f"{out}.%(ext)s",
-        "socket_timeout": 30,
+        "socket_timeout": 35,
     }
     if DEFAULT_IMPERSONATE and platform == "tiktok":
         opts["impersonate"] = DEFAULT_IMPERSONATE
@@ -493,17 +513,18 @@ async def download(
     if format == "mp4":
         if platform == "youtube" and quality and quality.isdigit():
             h = int(quality)
-            opts["format"] = f"bestvideo[height<={h}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={h}]+bestaudio/best[height<={h}]/best"
+            opts["format"] = f"bestvideo[height<={h}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={h}]+bestaudio/b[height<={h}]/b/best"
         else:
-            opts["format"] = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best"
+            opts["format"] = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/b/best"
         opts["merge_output_format"] = "mp4"
     else:
         opts["format"] = "bestaudio/best"
-        opts["postprocessors"] = [{
-            "key":              "FFmpegExtractAudio",
-            "preferredcodec":   "mp3",
-            "preferredquality": "320",
-        }]
+        if ffmpeg:
+            opts["postprocessors"] = [{
+                "key":              "FFmpegExtractAudio",
+                "preferredcodec":   "mp3",
+                "preferredquality": "320",
+            }]
 
     try:
         info = await loop.run_in_executor(None, lambda: _ydl_download(raw, opts))
@@ -511,7 +532,7 @@ async def download(
         msg = str(e)
         logger.error(f"Download error: {msg}")
         if "blocked" in msg:
-            raise HTTPException(403, "IP محظور مؤقتاً.")
+            raise HTTPException(403, "الـ IP محظور مؤقتاً من السيرفر.")
         if "Private" in msg:
             raise HTTPException(403, "الفيديو خاص.")
         raise HTTPException(500, f"فشل التحميل: {msg}")
