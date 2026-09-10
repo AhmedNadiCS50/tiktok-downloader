@@ -46,6 +46,12 @@ try:
 except Exception:
     DEFAULT_IMPERSONATE = None
 
+YOUTUBE_EXTRACTOR_ARGS = {
+    "youtube": {
+        "player_client": ["android", "ios", "web", "mweb"],
+    }
+}
+
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("media-downloader")
@@ -55,7 +61,7 @@ STATIC_DIR   = BASE_DIR / "static"
 DOWNLOAD_DIR = Path(tempfile.gettempdir()) / "media_downloads"
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="Media Downloader - TikTok, Instagram & YouTube", version="5.1.0")
+app = FastAPI(title="Media Downloader - TikTok, Instagram & YouTube", version="5.2.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -180,9 +186,9 @@ def _del(path: str):
 async def health():
     return {
         "status": "ok",
-        "version": "5.1.0",
+        "version": "5.2.0",
         "platforms": ["tiktok", "instagram", "youtube"],
-        "features": ["quality_selection", "playlists"]
+        "features": ["quality_selection", "playlists", "bot_bypass"]
     }
 
 
@@ -214,6 +220,7 @@ async def analyze(req: AnalyzeRequest):
             "quiet": True,
             "no_warnings": True,
             "socket_timeout": 20,
+            "extractor_args": YOUTUBE_EXTRACTOR_ARGS,
         }
         try:
             info = await loop.run_in_executor(None, lambda: _ydl_extract(raw, opts))
@@ -309,6 +316,8 @@ async def analyze(req: AnalyzeRequest):
         "no_warnings":   True,
         "socket_timeout": 20,
     }
+    if platform == "youtube":
+        opts["extractor_args"] = YOUTUBE_EXTRACTOR_ARGS
     if DEFAULT_IMPERSONATE and platform == "tiktok":
         opts["impersonate"] = DEFAULT_IMPERSONATE
 
@@ -505,6 +514,8 @@ async def download(
         "outtmpl":        f"{out}.%(ext)s",
         "socket_timeout": 35,
     }
+    if platform == "youtube":
+        opts["extractor_args"] = YOUTUBE_EXTRACTOR_ARGS
     if DEFAULT_IMPERSONATE and platform == "tiktok":
         opts["impersonate"] = DEFAULT_IMPERSONATE
     if ffmpeg:
