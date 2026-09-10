@@ -9,7 +9,7 @@ import tempfile
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from urllib.parse import quote
 
 if sys.platform == "win32":
@@ -55,7 +55,7 @@ STATIC_DIR   = BASE_DIR / "static"
 DOWNLOAD_DIR = Path(tempfile.gettempdir()) / "media_downloads"
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="TikTok & Instagram Downloader", version="4.0.0")
+app = FastAPI(title="Media Downloader - TikTok, Instagram & YouTube", version="5.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -108,7 +108,13 @@ def detect_platform(url: str) -> Optional[str]:
         return "tiktok"
     if re.search(r"https?://(?:www\.)?(?:instagram\.com|instagr\.am)/", raw):
         return "instagram"
+    if re.search(r"https?://(?:[a-zA-Z0-9-]+\.)?(?:youtube\.com|youtu\.be)/", raw):
+        return "youtube"
     return None
+
+def is_youtube_playlist(url: str) -> bool:
+    raw = url.strip().lower()
+    return ("list=" in raw or "/playlist" in raw) and ("youtube.com" in raw or "youtu.be" in raw)
 
 def extract_instagram_shortcode(url: str) -> Optional[str]:
     m = re.search(r"(?:instagram\.com|instagr\.am)/(?:reel|reels|p|tv)/([a-zA-Z0-9_-]+)", url)
@@ -117,8 +123,15 @@ def extract_instagram_shortcode(url: str) -> Optional[str]:
 def fmt_duration(s) -> str:
     if not s:
         return "00:00"
-    m, sec = divmod(int(s), 60)
-    return f"{m:02d}:{sec:02d}"
+    try:
+        s = int(s)
+        hrs, rem = divmod(s, 3600)
+        m, sec = divmod(rem, 60)
+        if hrs > 0:
+            return f"{hrs}:{m:02d}:{sec:02d}"
+        return f"{m:02d}:{sec:02d}"
+    except Exception:
+        return "00:00"
 
 def sweep_old_files(max_age_seconds=1800):
     try:
@@ -145,7 +158,12 @@ def _del(path: str):
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "4.0.0", "platforms": ["tiktok", "instagram"]}
+    return {
+        "status": "ok",
+        "version": "5.0.0",
+        "platforms": ["tiktok", "instagram", "youtube"],
+        "features": ["quality_selection", "playlists"]
+    }
 
 
 # ── Analyze ────────────────────────────────────────────────────────────────────
@@ -161,14 +179,62 @@ def _ydl_extract(url: str, opts: dict):
 async def analyze(req: AnalyzeRequest):
     raw = req.url.strip()
     if not raw:
-        raise HTTPException(400, "أدخل رابط فيديو.")
+        raise HTTPException(400, "أدخل رابط فيديو أو قائمة تشغيل.")
     platform = detect_platform(raw)
     if not platform:
-        raise HTTPException(400, "رابط غير مدعوم. يُرجى إدخال رابط TikTok أو Instagram.")
+        raise HTTPException(400, "رابط غير مدعوم. يُرجى إدخال رابط TikTok أو Instagram أو YouTube.")
 
     loop = asyncio.get_running_loop()
 
-    # ── Instagram Analysis ───────────────────────────────────────────────────
+    # ── 1. YouTube Playlist ──────────────────────────────────────────────────
+    if platform == "youtube" and is_youtube_playlist(raw):
+        opts: Dict[str, Any] = {
+            "extract_flat": "in_playlist",
+            "skip_download": True,
+            "quiet": True,
+            "no_warnings": True,
+            "socket_timeout": 20,
+        }
+        try:
+            info = await loop.run_in_executor(None, lambda: _ydl_extract(raw, opts))
+        except Exception as e:
+            logger.error(f"Playlist analyze error: {e}")
+            raise HTTPException(500, f"فشل قراءة قائمة التشغيل: {e}")
+
+        raw_entries = info.get("entries") or []
+        entries: List[Dict[str, Any]] = []
+        for e in raw_entries[:80]:  # Limit to first 80 for fast responsive UI
+            vid_id = e.get("id") or e.get("url")
+            thumb = e.get("thumbnail")
+            thumbs = e.get("thumbnails")
+            if thumbs and isinstance(thumbs, list):
+                thumb = thumbs[-1].get("url") or thumb
+            if not thumb and vid_id:
+                thumb = f"https://i.ytimg.com/vi/{vid_id}/hqdefault.jpg"
+
+            entries.append({
+                "id": vid_id,
+                "title": e.get("title") or "YouTube Video",
+                "uploader": e.get("uploader") or e.get("channel") or info.get("uploader") or "YouTube",
+                "duration": e.get("duration"),
+                "duration_formatted": fmt_duration(e.get("duration")),
+                "thumbnail": thumb,
+                "url": f"https://www.youtube.com/watch?v={vid_id}" if vid_id and not vid_id.startswith("http") else e.get("url"),
+            })
+
+        return {
+            "status": "success",
+            "type": "playlist",
+            "platform": "youtube",
+            "id": info.get("id") or "playlist",
+            "title": info.get("title") or "YouTube Playlist",
+            "uploader": info.get("uploader") or info.get("channel") or "Creator",
+            "count": len(raw_entries),
+            "entries": entries,
+            "original_url": raw,
+        }
+
+    # ── 2. Instagram Video / Reel ────────────────────────────────────────────
     if platform == "instagram":
         shortcode = extract_instagram_shortcode(raw)
         if not shortcode:
@@ -193,6 +259,7 @@ async def analyze(req: AnalyzeRequest):
 
         return {
             "status": "success",
+            "type": "video",
             "platform": "instagram",
             "id": shortcode,
             "title": title,
@@ -210,25 +277,28 @@ async def analyze(req: AnalyzeRequest):
             "like_count": getattr(post, "likes", None),
             "comment_count": getattr(post, "comments", None),
             "original_url": raw,
+            "qualities": [
+                {"quality": "best", "label": "Original Quality (HD)"}
+            ],
         }
 
-    # ── TikTok Analysis ──────────────────────────────────────────────────────
+    # ── 3. YouTube Single Video or TikTok ────────────────────────────────────
     opts: Dict[str, Any] = {
         "skip_download": True,
         "quiet":         True,
         "no_warnings":   True,
         "socket_timeout": 20,
     }
-    if DEFAULT_IMPERSONATE:
+    if DEFAULT_IMPERSONATE and platform == "tiktok":
         opts["impersonate"] = DEFAULT_IMPERSONATE
 
     try:
         info = await loop.run_in_executor(None, lambda: _ydl_extract(raw, opts))
     except Exception as e:
         msg = str(e)
-        logger.error(f"TikTok analyze error: {msg}")
+        logger.error(f"{platform} analyze error: {msg}")
         if "Private" in msg: raise HTTPException(403, "الفيديو خاص.")
-        if "blocked" in msg: raise HTTPException(403, "الـ IP محظور مؤقتاً من TikTok.")
+        if "blocked" in msg: raise HTTPException(403, "الـ IP محظور مؤقتاً.")
         if "not found" in msg.lower(): raise HTTPException(404, "الفيديو غير موجود أو محذوف.")
         raise HTTPException(500, f"فشل جلب المعلومات: {msg}")
 
@@ -240,6 +310,22 @@ async def analyze(req: AnalyzeRequest):
     h = info.get("height")
     fps = info.get("fps")
 
+    # Determine qualities
+    qualities = []
+    if platform == "youtube":
+        avail_heights = sorted(list(set(
+            f.get("height") for f in formats if f.get("height") and f.get("vcodec") != "none"
+        )), reverse=True)
+        for q in [2160, 1440, 1080, 720, 480, 360]:
+            if any(ah >= q for ah in avail_heights):
+                suffix = " (4K)" if q == 2160 else " (2K)" if q == 1440 else " (1080p FHD)" if q == 1080 else " (720p HD)" if q == 720 else ""
+                qualities.append({"quality": str(q), "label": f"{q}p{suffix}"})
+        if not qualities:
+            qualities.append({"quality": "best", "label": "Best Available (HD)"})
+    else:
+        qualities.append({"quality": "best", "label": "Original Quality (HD)"})
+
+    # Find highest res for preview
     best_vid = None
     max_res = 0
     for f in formats:
@@ -276,9 +362,10 @@ async def analyze(req: AnalyzeRequest):
 
     return {
         "status": "success",
-        "platform": "tiktok",
-        "id":     str(info.get("id", "tiktok")),
-        "title":  info.get("title") or "TikTok Video",
+        "type": "video",
+        "platform": platform,
+        "id":     str(info.get("id", "video")),
+        "title":  info.get("title") or f"{platform.capitalize()} Video",
         "uploader":   info.get("uploader") or info.get("channel") or "Creator",
         "uploader_id": info.get("uploader_id"),
         "duration":          duration,
@@ -293,6 +380,7 @@ async def analyze(req: AnalyzeRequest):
         "like_count":    info.get("like_count"),
         "comment_count": info.get("comment_count"),
         "original_url":  raw,
+        "qualities": qualities,
     }
 
 
@@ -305,8 +393,9 @@ def _ydl_download(url: str, opts: dict):
 @app.get("/api/download")
 async def download(
     background_tasks: BackgroundTasks,
-    url: str    = Query(...),
-    format: str = Query("mp4", pattern="^(mp4|mp3)$"),
+    url: str               = Query(...),
+    format: str            = Query("mp4", pattern="^(mp4|mp3)$"),
+    quality: Optional[str] = Query("best"),
 ):
     raw = url.strip()
     platform = detect_platform(raw)
@@ -338,7 +427,6 @@ async def download(
 
         mp4_path = str(DOWNLOAD_DIR / f"dl_{sid}.mp4")
 
-        # Download directly via httpx stream
         try:
             async with httpx.AsyncClient(timeout=40, follow_redirects=True) as client:
                 async with client.stream("GET", post.video_url) as resp:
@@ -375,7 +463,6 @@ async def download(
                 )
             except Exception as e:
                 logger.warning(f"Audio conversion failed: {e}")
-                # Fallback to serving the mp4 video if mp3 conversion fails
 
         background_tasks.add_task(_del, mp4_path)
         filename = f"{title}.mp4"
@@ -390,7 +477,7 @@ async def download(
             },
         )
 
-    # ── TikTok Download ──────────────────────────────────────────────────────
+    # ── TikTok & YouTube Download ────────────────────────────────────────────
     out = str(DOWNLOAD_DIR / f"dl_{sid}")
     opts: Dict[str, Any] = {
         "quiet":          True,
@@ -398,25 +485,25 @@ async def download(
         "outtmpl":        f"{out}.%(ext)s",
         "socket_timeout": 30,
     }
-    if DEFAULT_IMPERSONATE:
+    if DEFAULT_IMPERSONATE and platform == "tiktok":
         opts["impersonate"] = DEFAULT_IMPERSONATE
     if ffmpeg:
         opts["ffmpeg_location"] = ffmpeg
 
     if format == "mp4":
-        opts.update({
-            "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best",
-            "merge_output_format": "mp4",
-        })
+        if platform == "youtube" and quality and quality.isdigit():
+            h = int(quality)
+            opts["format"] = f"bestvideo[height<={h}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<={h}]+bestaudio/best[height<={h}]/best"
+        else:
+            opts["format"] = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best"
+        opts["merge_output_format"] = "mp4"
     else:
-        opts.update({
-            "format": "bestaudio/best",
-            "postprocessors": [{
-                "key":              "FFmpegExtractAudio",
-                "preferredcodec":   "mp3",
-                "preferredquality": "320",
-            }],
-        })
+        opts["format"] = "bestaudio/best"
+        opts["postprocessors"] = [{
+            "key":              "FFmpegExtractAudio",
+            "preferredcodec":   "mp3",
+            "preferredquality": "320",
+        }]
 
     try:
         info = await loop.run_in_executor(None, lambda: _ydl_download(raw, opts))
@@ -424,7 +511,7 @@ async def download(
         msg = str(e)
         logger.error(f"Download error: {msg}")
         if "blocked" in msg:
-            raise HTTPException(403, "IP محظور مؤقتاً من TikTok.")
+            raise HTTPException(403, "IP محظور مؤقتاً.")
         if "Private" in msg:
             raise HTTPException(403, "الفيديو خاص.")
         raise HTTPException(500, f"فشل التحميل: {msg}")
@@ -435,12 +522,12 @@ async def download(
 
     file_path = matches[0]
     ext       = os.path.splitext(file_path)[1].lstrip(".")
-    title     = info.get("title") or "TikTok"
+    title     = info.get("title") or f"{platform}_media"
     uploader  = info.get("uploader") or ""
     name      = sanitize(f"{title} - {uploader}" if uploader else title)
     filename  = f"{name}.{ext}"
 
-    ascii_fn  = re.sub(r"[^\x00-\x7F]+", "_", filename).strip("_") or "tiktok_media"
+    ascii_fn  = re.sub(r"[^\x00-\x7F]+", "_", filename).strip("_") or "media_file"
     enc_fn    = quote(filename)
 
     background_tasks.add_task(_del, file_path)
@@ -466,7 +553,7 @@ async def index():
     f = STATIC_DIR / "index.html"
     return HTMLResponse(
         f.read_text(encoding="utf-8") if f.exists()
-        else "<h1>TikTok & Instagram Downloader</h1>"
+        else "<h1>TikTok, Instagram & YouTube Downloader</h1>"
     )
 
 if __name__ == "__main__":

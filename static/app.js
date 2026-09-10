@@ -11,31 +11,44 @@ let currentVideoData = null;
 let isAnalyzing = false;
 
 // DOM Elements
-const analyzeForm      = document.getElementById('analyzeForm');
-const urlInput         = document.getElementById('urlInput');
-const clearBtn         = document.getElementById('clearBtn');
-const pasteBtn         = document.getElementById('pasteBtn');
-const submitBtn        = document.getElementById('submitBtn');
-const btnText          = document.getElementById('btnText');
-const btnSpinner       = document.getElementById('btnSpinner');
-const errorBox         = document.getElementById('errorBox');
-const errorTitle       = document.getElementById('errorTitle');
-const errorMessage     = document.getElementById('errorMessage');
-const previewCard      = document.getElementById('previewCard');
-const videoThumbnail   = document.getElementById('videoThumbnail');
-const videoDuration    = document.getElementById('videoDuration');
-const videoTitle       = document.getElementById('videoTitle');
-const videoUploader    = document.getElementById('videoUploader');
-const authorAvatarChar = document.getElementById('authorAvatarChar');
-const videoResolution  = document.getElementById('videoResolution');
-const videoFps         = document.getElementById('videoFps');
-const downloadVideoBtn = document.getElementById('downloadVideoBtn');
-const downloadAudioBtn = document.getElementById('downloadAudioBtn');
-const downloadStatus   = document.getElementById('downloadStatus');
-const downloadStatusText = document.getElementById('downloadStatusText');
-const toast            = document.getElementById('toast');
-const toastMessage     = document.getElementById('toastMessage');
-const toastIcon        = document.getElementById('toastIcon');
+const analyzeForm          = document.getElementById('analyzeForm');
+const urlInput             = document.getElementById('urlInput');
+const clearBtn             = document.getElementById('clearBtn');
+const pasteBtn             = document.getElementById('pasteBtn');
+const submitBtn            = document.getElementById('submitBtn');
+const btnText              = document.getElementById('btnText');
+const btnSpinner           = document.getElementById('btnSpinner');
+const errorBox             = document.getElementById('errorBox');
+const errorTitle           = document.getElementById('errorTitle');
+const errorMessage         = document.getElementById('errorMessage');
+
+// Single Video Card Elements
+const previewCard          = document.getElementById('previewCard');
+const videoThumbnail       = document.getElementById('videoThumbnail');
+const videoDuration        = document.getElementById('videoDuration');
+const videoTitle           = document.getElementById('videoTitle');
+const videoUploader        = document.getElementById('videoUploader');
+const authorAvatarChar     = document.getElementById('authorAvatarChar');
+const videoResolution      = document.getElementById('videoResolution');
+const videoFps             = document.getElementById('videoFps');
+const qualitySelectorGroup = document.getElementById('qualitySelectorGroup');
+const qualitySelect        = document.getElementById('qualitySelect');
+const downloadVideoBtn     = document.getElementById('downloadVideoBtn');
+const downloadAudioBtn     = document.getElementById('downloadAudioBtn');
+const downloadStatus       = document.getElementById('downloadStatus');
+const downloadStatusText   = document.getElementById('downloadStatusText');
+
+// Playlist Card Elements
+const playlistCard         = document.getElementById('playlistCard');
+const playlistTitle        = document.getElementById('playlistTitle');
+const playlistUploaderName = document.getElementById('playlistUploaderName');
+const playlistCountBadge   = document.getElementById('playlistCountBadge');
+const playlistEntries      = document.getElementById('playlistEntries');
+
+// Toast Elements
+const toast                = document.getElementById('toast');
+const toastMessage         = document.getElementById('toastMessage');
+const toastIcon            = document.getElementById('toastIcon');
 
 // ── Health ──────────────────────────────────────────────────────────────────
 async function checkBackendHealth() {
@@ -90,9 +103,10 @@ clearBtn.addEventListener('click', () => {
   clearBtn.classList.add('hidden');
   urlInput.focus();
 });
+
 const isSupportedUrl = (u) => {
   const l = (u || '').toLowerCase();
-  return l.includes('tiktok.com') || l.includes('instagram.com') || l.includes('instagr.am');
+  return l.includes('tiktok.com') || l.includes('instagram.com') || l.includes('instagr.am') || l.includes('youtube.com') || l.includes('youtu.be');
 };
 
 pasteBtn.addEventListener('click', async () => {
@@ -116,11 +130,13 @@ pasteBtn.addEventListener('click', async () => {
 analyzeForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const url = urlInput.value.trim();
-  if (!url) { showError('رابط فارغ', 'أدخل رابط فيديو TikTok أو Instagram أولاً.'); return; }
+  if (!url) { showError('رابط فارغ', 'أدخل رابط فيديو TikTok, Instagram أو YouTube أولاً.'); return; }
   if (!isSupportedUrl(url)) {
-    showError('رابط غير مدعوم', 'الرابط لا يبدو من TikTok أو Instagram. يُرجى التحقق من الرابط.'); return;
+    showError('رابط غير مدعوم', 'الرابط لا يبدو من TikTok, Instagram أو YouTube. يُرجى التحقق من الرابط.'); return;
   }
   hideError();
+  previewCard.classList.add('hidden');
+  playlistCard.classList.add('hidden');
   setAnalyzeLoading(true);
 
   try {
@@ -135,15 +151,21 @@ analyzeForm.addEventListener('submit', async (e) => {
     if (!res.ok) throw new Error(data.detail || `خطأ (${res.status})`);
 
     currentVideoData = data;
-    renderPreview(data);
-    const platName = data.platform === 'instagram' ? 'Instagram' : 'TikTok';
-    showToast(`تم تحليل فيديو ${platName}!`, '🎉');
+    if (data.type === 'playlist') {
+      renderPlaylist(data);
+      showToast(`تم جلب قائمة التشغيل (${data.count} فيديو)!`, '📋');
+    } else {
+      renderPreview(data);
+      const platName = data.platform === 'instagram' ? 'Instagram' : data.platform === 'youtube' ? 'YouTube' : 'TikTok';
+      showToast(`تم تحليل فيديو ${platName}!`, '🎉');
+    }
   } catch (err) {
     let msg = err.message || 'تعذّر جلب التفاصيل.';
     if (err.name === 'TypeError' && msg.includes('fetch'))
       msg = 'السيرفر غير مشغّل! شغّل run.bat أو افتح http://localhost:8000';
     showError('فشل التحليل', msg);
     previewCard.classList.add('hidden');
+    playlistCard.classList.add('hidden');
   } finally {
     setAnalyzeLoading(false);
   }
@@ -158,38 +180,104 @@ function setAnalyzeLoading(on) {
   btnSpinner.classList.toggle('hidden', !on);
 }
 
-// ── Preview ─────────────────────────────────────────────────────────────────
+// ── Preview Single Video ────────────────────────────────────────────────────
 function renderPreview(data) {
+  playlistCard.classList.add('hidden');
   videoThumbnail.src = data.thumbnail || 'https://via.placeholder.com/400x600?text=No+Thumbnail';
   videoDuration.textContent = data.duration_formatted || '00:00';
-  videoTitle.textContent    = data.title || (data.platform === 'instagram' ? 'Instagram Reel' : 'TikTok Video');
+  videoTitle.textContent    = data.title || 'Video Title';
   const creator = data.uploader || 'creator';
   videoUploader.textContent  = creator.startsWith('@') ? creator : `@${creator}`;
-  authorAvatarChar.textContent = (creator.replace('@', '')[0] || (data.platform === 'instagram' ? 'I' : 'T')).toUpperCase();
+  
+  let initial = 'V';
+  if (data.platform === 'youtube') initial = 'Y';
+  else if (data.platform === 'instagram') initial = 'I';
+  else if (data.platform === 'tiktok') initial = 'T';
+  authorAvatarChar.textContent = (creator.replace('@', '')[0] || initial).toUpperCase();
+
   videoResolution.textContent = data.resolution_label || 'Original HD';
   videoFps.textContent        = data.fps_label || 'Original FPS';
+
+  // Qualities Dropdown
+  if (data.qualities && data.qualities.length > 0) {
+    qualitySelectorGroup.classList.remove('hidden');
+    qualitySelect.innerHTML = data.qualities.map(q => 
+      `<option value="${q.quality}">${q.label}</option>`
+    ).join('');
+  } else {
+    qualitySelectorGroup.classList.add('hidden');
+  }
+
   previewCard.classList.remove('hidden');
   previewCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ── Download ─────────────────────────────────────────────────────────────────
-// Strategy:
-//   1. Try opening the CDN URL directly (fast, no server needed).
-//   2. If no CDN URL available → fallback to server /api/download.
-//
-// Note: TikTok CDN URLs sometimes have IP/referer restrictions.
-// The browser will either download the file or show it — both are fine.
+// ── Preview Playlist ────────────────────────────────────────────────────────
+function renderPlaylist(data) {
+  previewCard.classList.add('hidden');
+  playlistTitle.textContent = data.title || 'YouTube Playlist';
+  playlistUploaderName.textContent = data.uploader || 'YouTube Channel';
+  playlistCountBadge.textContent = `${data.count || data.entries.length} Videos`;
 
-function triggerDownload(format) {
-  if (!currentVideoData || !currentVideoData.original_url) {
-    showError('لا يوجد فيديو', 'حلّل رابط TikTok أولاً.');
+  playlistEntries.innerHTML = (data.entries || []).map((entry, idx) => {
+    const thumb = entry.thumbnail || 'https://via.placeholder.com/120x90?text=Video';
+    const dur = entry.duration_formatted || '00:00';
+    const title = entry.title || `Video #${idx + 1}`;
+    const url = entry.url;
+
+    return `
+      <div class="p-3 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/30 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3 flex-1 min-w-0">
+          <span class="text-xs font-mono font-bold text-gray-500 w-5 shrink-0">${idx + 1}</span>
+          <div class="relative w-24 h-14 rounded-lg overflow-hidden shrink-0 bg-black/40 border border-white/10">
+            <img src="${thumb}" alt="${title}" class="w-full h-full object-cover" loading="lazy">
+            <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-mono text-white">${dur}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-sm font-bold text-white line-clamp-1">${title}</h4>
+            <p class="text-xs text-gray-400 mt-0.5 line-clamp-1">${entry.uploader || ''}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
+          <button 
+            onclick="triggerDownload('mp4', '${url}', 'best')"
+            class="px-3 py-1.5 rounded-lg bg-cyan-600/80 hover:bg-cyan-500 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>MP4</span>
+          </button>
+
+          <button 
+            onclick="triggerDownload('mp3', '${url}', 'best')"
+            class="px-3 py-1.5 rounded-lg bg-rose-600/80 hover:bg-rose-500 text-white text-xs font-bold transition flex items-center gap-1 active:scale-95"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+            <span>MP3</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  playlistCard.classList.remove('hidden');
+  playlistCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── Download Trigger ────────────────────────────────────────────────────────
+function triggerDownload(format, targetUrl = null, customQuality = null) {
+  const url = targetUrl || (currentVideoData ? currentVideoData.original_url : null);
+  if (!url) {
+    showError('لا يوجد رابط', 'أدخل أو حلّل رابط فيديو أولاً.');
     return;
   }
 
-  const label = format === 'mp4' ? 'الفيديو (MP4)' : 'الصوت (MP3)';
+  const quality = customQuality || (qualitySelect ? qualitySelect.value : 'best');
+  const label = format === 'mp4' ? `الفيديو (MP4 ${quality !== 'best' ? quality + 'p' : ''})` : 'الصوت (MP3)';
+  
   showToast(`جارٍ تجهيز ${label} وسيبدأ التحميل بجهازك مباشرة... ⏳`, '📥', 10000);
 
-  const downloadUrl = `${API_BASE}/api/download?url=${encodeURIComponent(currentVideoData.original_url)}&format=${format}`;
+  const downloadUrl = `${API_BASE}/api/download?url=${encodeURIComponent(url)}&format=${format}&quality=${quality}`;
 
   // Start file download directly in browser
   const a = document.createElement('a');
@@ -201,6 +289,9 @@ function triggerDownload(format) {
     try { document.body.removeChild(a); } catch (_) {}
   }, 1000);
 }
+
+// Make triggerDownload available globally for inline onclick handlers
+window.triggerDownload = triggerDownload;
 
 // ── Button listeners ─────────────────────────────────────────────────────────
 downloadVideoBtn.addEventListener('click', () => triggerDownload('mp4'));
