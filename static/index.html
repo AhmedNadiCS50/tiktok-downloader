@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TikTok Media Downloader | HD Video (MP4) & Audio (MP3)</title>
+  <meta name="description" content="Free, ultra-fast TikTok video and audio downloader. Extract original resolution, authentic FPS, no watermark MP4 videos and high-quality 320kbps MP3 audio.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              cyan: '#00F2FE',
+              cyanHover: '#4FACFE',
+              pink: '#FE2C55',
+              pinkHover: '#E0264A',
+              dark: '#0A0D14',
+              card: '#121722',
+              cardHover: '#181F2E',
+              border: 'rgba(255, 255, 255, 0.08)',
+            }
+          },
+          animation: {
+            'pulse-glow': 'pulseGlow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'spin-slow': 'spin 3s linear infinite',
+          },
+          keyframes: {
+            pulseGlow: {
+              '0%, 100%': { opacity: 0.4 },
+              '50%': { opacity: 0.8 },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom glow and backdrop effects */
+    body {
+      background-color: #080A0F;
+      color: #F3F4F6;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 35px -5px rgba(0, 242, 254, 0.35);
+    }
+    .glow-pink {
+      box-shadow: 0 0 35px -5px rgba(254, 44, 85, 0.35);
+    }
+    .glassmorphism {
+      background: rgba(18, 23, 34, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-input {
+      background: rgba(10, 13, 20, 0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .gradient-text-tiktok {
+      background: linear-gradient(135deg, #00F2FE 0%, #FFFFFF 50%, #FE2C55 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .gradient-border {
+      position: relative;
+    }
+    .gradient-border::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.5), rgba(254, 44, 85, 0.5));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0A0D14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #252D3F;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #374151;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500/30 selection:text-cyan-200 relative">
+
+  <!-- Background decorative light orbs -->
+  <div class="fixed top-[-150px] left-[-150px] w-[500px] h-[500px] bg-cyan-600/15 rounded-full blur-[140px] pointer-events-none -z-10 animate-pulse-glow"></div>
+  <div class="fixed top-[20%] right-[-150px] w-[600px] h-[600px] bg-rose-600/15 rounded-full blur-[150px] pointer-events-none -z-10 animate-pulse-glow" style="animation-delay: 1.5s;"></div>
+  <div class="fixed bottom-[-100px] left-[30%] w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[160px] pointer-events-none -z-10"></div>
+
+  <!-- Header / Navigation -->
+  <header class="w-full border-b border-white/5 glassmorphism sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between py-4">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-400 to-rose-500 p-[2px] flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <div class="w-full h-full bg-[#0A0D14] rounded-[10px] flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <span class="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
+            Tok<span class="text-cyan-400">Fetch</span>
+            <span class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">HD PRO</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <div id="serverStatusContainer" class="hidden sm:flex items-center gap-2 text-xs text-gray-400 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+          <span id="serverStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="serverStatusText">Connecting to backend...</span>
+        </div>
+        <a href="#how-it-works" class="text-sm font-medium text-gray-300 hover:text-white transition px-3 py-1.5 rounded-lg hover:bg-white/5">
+          How it Works
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16 flex-1 w-full">
+
+    <!-- Hero Title -->
+    <div class="text-center space-y-4 mb-10">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs sm:text-sm font-medium text-gray-300 shadow-inner">
+        <span class="text-cyan-400">⚡ Original Resolution & FPS</span>
+        <span class="text-gray-500">•</span>
+        <span class="text-rose-400">Studio 320kbps MP3</span>
+      </div>
+
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight">
+        Download TikTok Videos <br>
+        <span class="gradient-text-tiktok">In True Original Quality</span>
+      </h1>
+
+      <p class="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto font-normal">
+        Paste any TikTok URL below to analyze original resolution & frame rate, then save watermark-free MP4 video or pristine MP3 sound in seconds.
+      </p>
+    </div>
+
+    <!-- Input Form Card -->
+    <div class="glassmorphism rounded-2xl p-3 sm:p-5 mb-8 shadow-2xl relative gradient-border">
+      <form id="analyzeForm" class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+          </div>
+          <input 
+            type="url" 
+            id="urlInput"
+            required
+            placeholder="Paste TikTok video link here (e.g. https://www.tiktok.com/@.../video/...)"
+            class="w-full pl-11 pr-24 py-4 rounded-xl glass-input text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition text-sm sm:text-base"
+          >
+          <div class="absolute inset-y-0 right-0 pr-2 flex items-center space-x-1">
+            <button 
+              type="button" 
+              id="clearBtn"
+              title="Clear text"
+              class="hidden p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+            <button 
+              type="button" 
+              id="pasteBtn"
+              class="px-2.5 py-1.5 text-xs font-semibold text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 rounded-lg hover:bg-cyan-900/60 transition flex items-center gap-1"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              <span>Paste</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          id="submitBtn"
+          class="sm:w-auto px-7 py-4 rounded-xl font-bold text-white bg-gradient-to-r from-cyan-500 to-rose-500 hover:from-cyan-400 hover:to-rose-400 active:scale-[0.98] transition duration-200 shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
+        >
+          <span id="btnText">Analyze / Fetch</span>
+          <svg id="btnSpinner" class="hidden animate-spin w-5 h-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+      </form>
+
+      <!-- Quick Tips -->
+      <div class="mt-3 flex flex-wrap items-center justify-between text-xs text-gray-400 px-1 gap-2">
+        <div class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>Supports Web, Mobile App (vm.tiktok.com), and desktop links</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+          <span>100% No Watermark</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Alert Banner -->
+    <div id="errorBox" class="hidden mb-8 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm flex items-start gap-3 animate-fade-in">
+      <svg class="w-5 h-5 text-rose-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <div class="flex-1">
+        <span class="font-bold block" id="errorTitle">Extraction Error</span>
+        <span id="errorMessage" class="text-rose-200/90 text-xs sm:text-sm">Something went wrong. Please check your link and retry.</span>
+      </div>
+      <button onclick="document.getElementById('errorBox').classList.add('hidden')" class="text-rose-400 hover:text-white">
+        ✕
+      </button>
+    </div>
+
+    <!-- Preview & Action Card (Hidden initially) -->
+    <div id="previewCard" class="hidden glassmorphism rounded-2xl p-5 sm:p-7 mb-10 shadow-2xl border border-white/10 transition-all duration-300">
+      <div class="flex flex-col md:flex-row gap-6 items-center md:items-start">
+        
+        <!-- Left Column: Video Thumbnail with Duration Badge -->
+        <div class="relative w-full md:w-56 shrink-0 aspect-[9/14] sm:aspect-[9/13] max-w-[240px] rounded-xl overflow-hidden shadow-xl border border-white/10 group bg-black/40">
+          <img 
+            id="videoThumbnail" 
+            src="" 
+            alt="Video Thumbnail" 
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          >
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+          
+          <!-- Duration badge -->
+          <div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-md text-white text-xs font-mono font-semibold flex items-center gap-1.5 border border-white/10">
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+            </svg>
+            <span id="videoDuration">00:00</span>
+          </div>
+
+          <!-- Quality Badge overlay -->
+          <div class="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-cyan-500/20 backdrop-blur-md text-cyan-300 text-[10px] font-bold tracking-wider uppercase border border-cyan-500/40">
+            Original Stream
+          </div>
+        </div>
+
+        <!-- Right Column: Details & Download Actions -->
+        <div class="flex-1 w-full space-y-5">
+          
+          <!-- Author & Title -->
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-400 to-rose-500 flex items-center justify-center text-xs font-bold text-white uppercase">
+                <span id="authorAvatarChar">T</span>
+              </div>
+              <span id="videoUploader" class="text-sm font-semibold text-gray-200">@creator</span>
+              <svg class="w-4 h-4 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <h2 id="videoTitle" class="text-lg sm:text-xl font-bold text-white line-clamp-2 leading-snug">
+              Video Title
+            </h2>
+          </div>
+
+          <!-- Technical Specs Grid (Resolution, FPS, Duration, Audio) -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <!-- Resolution Metric -->
+            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center transition hover:border-cyan-500/30">
+              <span class="text-[10px] uppercase font-semibold text-gray-400 block mb-1">Resolution</span>
+              <div id="videoResolution" class="text-sm font-bold text-cyan-300 flex items-center justify-center gap-1">
+                1080 x 1920
+              </div>
+            </div>
+
+            <!-- FPS Metric -->
+            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center transition hover:border-rose-500/30">
+              <span class="text-[10px] uppercase font-semibold text-gray-400 block mb-1">Frame Rate</span>
+              <div id="videoFps" class="text-sm font-bold text-rose-300 flex items-center justify-center gap-1">
+                60 FPS
+              </div>
+            </div>
+
+            <!-- Watermark Metric -->
+            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
+              <span class="text-[10px] uppercase font-semibold text-gray-400 block mb-1">Watermark</span>
+              <div class="text-sm font-bold text-emerald-300 flex items-center justify-center gap-1">
+                Removed
+              </div>
+            </div>
+
+            <!-- Audio Metric -->
+            <div class="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
+              <span class="text-[10px] uppercase font-semibold text-gray-400 block mb-1">Audio Track</span>
+              <div class="text-sm font-bold text-amber-300 flex items-center justify-center gap-1">
+                320 kbps
+              </div>
+            </div>
+          </div>
+
+          <!-- Download Action Buttons -->
+          <div class="pt-2 space-y-3">
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Select Download Format</div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              
+              <!-- Video MP4 Download Button -->
+              <button 
+                id="downloadVideoBtn"
+                class="group relative w-full p-4 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold transition duration-200 glow-cyan active:scale-[0.98] flex items-center justify-between overflow-hidden"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="p-2 rounded-lg bg-black/20 group-hover:scale-110 transition duration-200">
+                    <svg class="w-6 h-6 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                  <div class="text-left">
+                    <div class="text-base font-bold flex items-center gap-1.5">
+                      Download Video
+                      <span class="text-[10px] px-1.5 py-0.5 bg-black/30 rounded font-semibold text-cyan-200">MP4</span>
+                    </div>
+                    <div class="text-xs font-normal text-cyan-100/80">Original Quality & Authentic FPS</div>
+                  </div>
+                </div>
+                <svg class="w-5 h-5 text-white/70 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+              </button>
+
+              <!-- Audio MP3 Download Button -->
+              <button 
+                id="downloadAudioBtn"
+                class="group relative w-full p-4 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold transition duration-200 glow-pink active:scale-[0.98] flex items-center justify-between overflow-hidden"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="p-2 rounded-lg bg-black/20 group-hover:scale-110 transition duration-200">
+                    <svg class="w-6 h-6 text-rose-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                    </svg>
+                  </div>
+                  <div class="text-left">
+                    <div class="text-base font-bold flex items-center gap-1.5">
+                      Download Audio
+                      <span class="text-[10px] px-1.5 py-0.5 bg-black/30 rounded font-semibold text-rose-200">MP3</span>
+                    </div>
+                    <div class="text-xs font-normal text-rose-100/80">High Bitrate 320kbps Audio</div>
+                  </div>
+                </div>
+                <svg class="w-5 h-5 text-white/70 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+              </button>
+
+            </div>
+
+            <!-- Download Status Notification Container -->
+            <div id="downloadStatus" class="hidden p-3 rounded-lg bg-cyan-950/40 border border-cyan-500/30 text-cyan-200 text-xs flex items-center gap-2.5">
+              <svg class="animate-spin w-4 h-4 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span id="downloadStatusText">Preparing media stream on server...</span>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Highlights -->
+    <div id="features" class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-16">
+      
+      <!-- Feature 1 -->
+      <div class="glassmorphism rounded-xl p-6 border border-white/5 hover:border-cyan-500/30 transition duration-300">
+        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-2">Original Resolution & FPS</h3>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          Zero re-compression. We extract the exact native stream uploaded by the creator, keeping crisp 1080p/4K resolution and high 60 FPS motion.
+        </p>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="glassmorphism rounded-xl p-6 border border-white/5 hover:border-rose-500/30 transition duration-300">
+        <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-2">Pure MP3 Sound Extraction</h3>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          Love the sound or song? Grab the isolated audio track encoded at high bitrate 320kbps MP3 for offline playlists and ringtones.
+        </p>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="glassmorphism rounded-xl p-6 border border-white/5 hover:border-emerald-500/30 transition duration-300">
+        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-white mb-2">Auto Server Cleanup</h3>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          Privacy-first architecture. All media is temporarily streamed to your browser and automatically deleted from the server immediately after transfer.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- How It Works Section -->
+    <div id="how-it-works" class="glassmorphism rounded-2xl p-6 sm:p-10 mb-16 border border-white/10">
+      <h2 class="text-2xl sm:text-3xl font-bold text-center text-white mb-8">
+        How to Download TikTok Content in 3 Steps
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-full bg-cyan-500/20 text-cyan-300 font-bold flex items-center justify-center mx-auto border border-cyan-500/30">
+            1
+          </div>
+          <h4 class="text-base font-bold text-white">Copy TikTok Link</h4>
+          <p class="text-sm text-gray-400">
+            Open TikTok, tap "Share" on any video, and select "Copy Link".
+          </p>
+        </div>
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-full bg-rose-500/20 text-rose-300 font-bold flex items-center justify-center mx-auto border border-rose-500/30">
+            2
+          </div>
+          <h4 class="text-base font-bold text-white">Analyze & Inspect Specs</h4>
+          <p class="text-sm text-gray-400">
+            Paste the link above and click Analyze to view resolution, FPS, and title preview.
+          </p>
+        </div>
+        <div class="space-y-3">
+          <div class="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center mx-auto border border-emerald-500/30">
+            3
+          </div>
+          <h4 class="text-base font-bold text-white">Download Video or Audio</h4>
+          <p class="text-sm text-gray-400">
+            Select "Download Video (MP4)" for visual content or "Download Audio (MP3)" for audio.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ Accordion -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold text-center text-white mb-8">Frequently Asked Questions</h2>
+      <div class="space-y-4 max-w-3xl mx-auto">
+        <details class="group glassmorphism rounded-xl p-5 border border-white/5 cursor-pointer">
+          <summary class="flex justify-between items-center font-medium text-white group-open:text-cyan-400">
+            <span>Does this tool download videos without a watermark?</span>
+            <span class="transition group-open:rotate-180">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </span>
+          </summary>
+          <p class="text-gray-400 text-sm mt-3 pt-3 border-t border-white/5 leading-relaxed">
+            Yes. The backend extracts the original raw stream directly using yt-dlp, bypassing the watermarked client overlay for clean playback.
+          </p>
+        </details>
+
+        <details class="group glassmorphism rounded-xl p-5 border border-white/5 cursor-pointer">
+          <summary class="flex justify-between items-center font-medium text-white group-open:text-cyan-400">
+            <span>Can I extract MP3 audio only from a TikTok video?</span>
+            <span class="transition group-open:rotate-180">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </span>
+          </summary>
+          <p class="text-gray-400 text-sm mt-3 pt-3 border-t border-white/5 leading-relaxed">
+            Yes! Clicking the "Download Audio (MP3)" button extracts the standalone audio track and encodes it in high-fidelity 320kbps MP3 format.
+          </p>
+        </details>
+
+        <details class="group glassmorphism rounded-xl p-5 border border-white/5 cursor-pointer">
+          <summary class="flex justify-between items-center font-medium text-white group-open:text-cyan-400">
+            <span>Are downloaded files stored on your server?</span>
+            <span class="transition group-open:rotate-180">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </span>
+          </summary>
+          <p class="text-gray-400 text-sm mt-3 pt-3 border-t border-white/5 leading-relaxed">
+            No. The server uses automatic background cleanup that immediately removes each temporary file as soon as the download is sent to your device.
+          </p>
+        </details>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full border-t border-white/5 py-8 text-center text-xs text-gray-500 glassmorphism mt-12">
+    <div class="max-w-6xl mx-auto px-4 space-y-2">
+      <p class="text-gray-400">
+        TokFetch • Built with FastAPI, yt-dlp & Tailwind CSS.
+      </p>
+      <p class="text-[11px] text-gray-600">
+        Disclaimer: This tool is intended for personal and educational use only. Please respect creator copyright and TikTok's terms of service.
+      </p>
+    </div>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="px-4 py-3 rounded-xl glassmorphism border border-white/10 shadow-2xl text-white text-sm flex items-center gap-2.5">
+      <span id="toastIcon">✨</span>
+      <span id="toastMessage">Notification message</span>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

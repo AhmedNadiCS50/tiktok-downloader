@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+.Python
+venv/
+.venv/
+env/
+
+# TikTok downloader temp files
+temp_downloads/
+*.mp4
+*.mp3
+*.webm
+*.m4a
+*.part
+*.ytdl
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
