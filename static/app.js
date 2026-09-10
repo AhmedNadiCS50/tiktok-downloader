@@ -180,21 +180,20 @@ function triggerDownload(format) {
     return;
   }
 
-  const vid = currentVideoData;
-  const label = format === 'mp4' ? 'الفيديو (MP4)' : 'الصوت';
+  const label = format === 'mp4' ? 'الفيديو (MP4)' : 'الصوت (MP3)';
+  showToast(`جارٍ تجهيز ${label} وسيبدأ التحميل بجهازك مباشرة... ⏳`, '📥', 10000);
 
-  // Pick CDN URL
-  const cdnUrl = format === 'mp4'
-    ? vid.direct_video_url
-    : vid.direct_audio_url;
+  const downloadUrl = `${API_BASE}/api/download?url=${encodeURIComponent(currentVideoData.original_url)}&format=${format}`;
 
-  if (cdnUrl) {
-    // Open CDN URL directly → browser downloads or plays it
-    window.open(cdnUrl, '_blank');
-    showToast(`جارٍ فتح ${label}...`, '📥', 5000);
-  } else {
-    showError('لا يوجد رابط', 'لم يُعثر على رابط CDN. أعِد التحليل وحاول مجدداً.');
-  }
+  // Start file download directly in browser
+  const a = document.createElement('a');
+  a.href = downloadUrl;
+  a.setAttribute('download', '');
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    try { document.body.removeChild(a); } catch (_) {}
+  }, 1000);
 }
 
 // ── Button listeners ─────────────────────────────────────────────────────────
