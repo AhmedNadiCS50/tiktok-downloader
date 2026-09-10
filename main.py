@@ -62,7 +62,7 @@ STATIC_DIR   = BASE_DIR / "static"
 DOWNLOAD_DIR = Path(tempfile.gettempdir()) / "media_downloads"
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="Media Downloader - TikTok, Instagram & YouTube", version="5.2.0")
+app = FastAPI(title="Ahmed Nadi Media Downloader", version="5.4.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

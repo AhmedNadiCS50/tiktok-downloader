@@ -6,12 +6,12 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>TokFetch PRO | TikTok & Instagram HD Downloader with 3D Aesthetics</title>
-  <meta name="description" content="Ultra-fast, studio quality TikTok & Instagram downloader. Direct original resolution MP4 & 320kbps MP3 audio with 3D interactive interface.">
+  <title>Ahmed Nadi Downloader | TikTok, Instagram & YouTube HD</title>
+  <meta name="description" content="Ultra-fast, studio quality TikTok & Instagram media downloader created by Ahmed Nadi. Direct original resolution MP4 & 320kbps MP3 audio with 3D interactive interface.">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <!-- Three.js 3D Engine Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -92,8 +92,8 @@
     }
     
     .glass-panel:hover {
-      border-color: rgba(0, 242, 254, 0.25);
-      box-shadow: 0 25px 60px rgba(0, 242, 254, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      border-color: rgba(0, 242, 254, 0.3);
+      box-shadow: 0 25px 60px rgba(0, 242, 254, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
 
     .glass-input {
@@ -114,7 +114,13 @@
       background: linear-gradient(135deg, #00F2FE 0%, #FFFFFF 45%, #FE2C55 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 30px rgba(0, 242, 254, 0.2));
+      filter: drop-shadow(0 0 30px rgba(0, 242, 254, 0.25));
+    }
+
+    .gradient-brand {
+      background: linear-gradient(135deg, #00F2FE 0%, #FFFFFF 60%, #FE2C55 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .gradient-border-box {
@@ -142,6 +148,10 @@
 
     .glow-pink {
       box-shadow: 0 0 35px -5px rgba(254, 44, 85, 0.4);
+    }
+
+    .avatar-glow {
+      box-shadow: 0 0 25px rgba(0, 242, 254, 0.4), 0 0 40px rgba(254, 44, 85, 0.3);
     }
 
     /* Button shine effect */
@@ -213,21 +223,28 @@
 
   <!-- Header / Navigation -->
   <header class="w-full border-b border-white/10 glass-panel sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between py-4">
-      <div class="flex items-center space-x-3 cursor-pointer group" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-400 to-rose-500 p-[2px] flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition duration-300">
-          <div class="w-full h-full bg-[#05070A] rounded-[10px] flex items-center justify-center">
-            <svg class="w-5 h-5 text-cyan-400 group-hover:text-rose-400 transition duration-300" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"/>
-            </svg>
-          </div>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between py-3">
+      
+      <!-- Creator Brand & Avatar -->
+      <div class="flex items-center space-x-3.5 cursor-pointer group" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <div class="relative w-11 h-11 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-blue-500 to-rose-500 avatar-glow group-hover:scale-105 transition duration-300">
+          <img 
+            src="/static/ahmed_nadi.jpg" 
+            alt="Ahmed Nadi" 
+            class="w-full h-full object-cover rounded-full border border-black"
+          >
+          <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400 border-2 border-black rounded-full animate-pulse"></span>
         </div>
+        
         <div>
-          <span class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            Tok<span class="text-cyan-400">Fetch</span>
-            <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-cyan-500/20 to-rose-500/20 text-cyan-300 border border-cyan-500/30 shadow-sm">
+          <span class="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+            Ahmed <span class="gradient-brand">Nadi</span>
+            <span class="text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full bg-gradient-to-r from-cyan-500/20 to-rose-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm">
               3D PRO
             </span>
+          </span>
+          <span class="text-[11px] font-semibold text-gray-400 block -mt-1 tracking-wide">
+            Official Media Downloader
           </span>
         </div>
       </div>
@@ -235,10 +252,10 @@
       <div class="flex items-center space-x-3">
         <div id="serverStatusContainer" class="hidden sm:flex items-center gap-2 text-xs text-gray-300 bg-white/5 px-3.5 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
           <span id="serverStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="serverStatusText">Checking backend status...</span>
+          <span id="serverStatusText">Engine Ready</span>
         </div>
-        <a href="#how-it-works" class="text-xs sm:text-sm font-semibold text-gray-300 hover:text-cyan-400 transition px-3.5 py-2 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10">
-          How it Works
+        <a href="#about-creator" class="text-xs sm:text-sm font-bold text-cyan-300 hover:text-white transition px-3.5 py-2 rounded-xl bg-cyan-950/40 border border-cyan-500/30 hover:border-cyan-400">
+          About Creator
         </a>
       </div>
     </div>
@@ -250,18 +267,18 @@
     <!-- Hero Title -->
     <div class="text-center space-y-4 mb-10">
       <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs sm:text-sm font-semibold text-gray-200 shadow-inner backdrop-blur-md animate-float-smooth">
-        <span class="text-cyan-400">⚡ Original Resolution & FPS</span>
+        <span class="text-cyan-400">⚡ Created & Engineered by Ahmed Nadi</span>
         <span class="text-gray-500">•</span>
-        <span class="text-rose-400">Studio 320kbps Audio</span>
+        <span class="text-rose-400">3D Interactive Engine</span>
       </div>
 
       <h1 class="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight">
-        Download TikTok & Instagram <br>
-        <span class="gradient-title">With Ultra 3D Smoothness</span>
+        Ahmed Nadi Media Downloader <br>
+        <span class="gradient-title">TikTok & Instagram HD Studio</span>
       </h1>
 
-      <p class="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto font-normal leading-relaxed">
-        Paste any TikTok or Instagram link below to extract original HD resolution, native FPS video, or crisp 320kbps MP3 audio instantly.
+      <p class="text-gray-300 text-base sm:text-lg max-w-2xl mx-auto font-normal leading-relaxed">
+        Paste any TikTok or Instagram link below to extract original HD resolution, native 60 FPS video, or studio quality 320kbps MP3 audio instantly.
       </p>
     </div>
 
@@ -325,7 +342,7 @@
           <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          <span>TikTok Videos & Instagram Reels / Posts</span>
+          <span>Supports TikTok & Instagram Videos / Reels</span>
         </div>
         <div class="flex items-center gap-2">
           <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
@@ -516,27 +533,43 @@
       </div>
     </div>
 
-    <!-- Playlist Action Card (Hidden initially) -->
-    <div id="playlistCard" class="hidden glass-panel rounded-2xl p-5 sm:p-7 mb-12 border border-white/10 shadow-2xl animate-card-in">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-5 mb-5">
-        <div>
-          <div class="flex items-center gap-2 mb-2">
-            <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-rose-400" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-              YouTube Playlist
-            </span>
-            <span id="playlistCountBadge" class="text-xs text-cyan-400 font-bold px-2.5 py-0.5 rounded-full bg-cyan-950/70 border border-cyan-500/40">0 Videos</span>
+    <!-- Creator Spotlight Section -->
+    <div id="about-creator" class="glass-panel rounded-2xl p-6 sm:p-8 mb-16 border border-cyan-500/30 shadow-2xl relative overflow-hidden">
+      <div class="absolute -top-24 -right-24 w-60 h-60 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="flex flex-col md:flex-row items-center gap-6 sm:gap-8">
+        
+        <!-- Creator Avatar Image -->
+        <div class="relative shrink-0">
+          <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-2xl p-[3px] bg-gradient-to-tr from-cyan-400 via-blue-500 to-rose-500 shadow-2xl avatar-glow overflow-hidden">
+            <img 
+              src="/static/ahmed_nadi.jpg" 
+              alt="Ahmed Nadi - Developer & Creator" 
+              class="w-full h-full object-cover rounded-xl"
+            >
           </div>
-          <h2 id="playlistTitle" class="text-xl sm:text-2xl font-black text-white tracking-tight">Playlist Title</h2>
-          <p id="playlistUploader" class="text-xs text-gray-400 mt-1 flex items-center gap-1">
-            <span>Channel:</span> <span id="playlistUploaderName" class="text-gray-200 font-semibold">Channel Name</span>
-          </p>
+          <span class="absolute -bottom-2 -right-2 px-2.5 py-0.5 bg-cyan-500 text-black text-[10px] font-black tracking-wider uppercase rounded-full shadow-lg">
+            CREATOR
+          </span>
         </div>
-      </div>
 
-      <!-- Playlist items scrollable list -->
-      <div id="playlistEntries" class="space-y-3 max-h-[550px] overflow-y-auto pr-1">
-        <!-- Populated dynamically -->
+        <!-- Creator Bio -->
+        <div class="text-center md:text-left space-y-2.5 flex-1">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-bold text-cyan-300">
+            <span>💻 Lead Developer & Designer</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            Ahmed Nadi
+          </h2>
+          <p class="text-gray-300 text-sm sm:text-base leading-relaxed">
+            مرحباً بك في أداة تنزيل الفيديوهات والصوتيات الفائقة. تم تطوير هذه الأداة بواسطة **أحمد نادي** لتوفير تجربة استخراج وسائط فائقة السرعة، بدون علامات مائية وبواجهة ثلاثية الأبعاد سلسة وحديثة.
+          </p>
+          <div class="pt-1 flex flex-wrap items-center justify-center md:justify-start gap-3 text-xs text-gray-400">
+            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">🚀 FastAPI & Python</span>
+            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">🎨 Three.js 3D WebGL</span>
+            <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">⚡ High Bitrate 320kbps MP3</span>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -585,94 +618,17 @@
 
     </div>
 
-    <!-- How It Works Section -->
-    <div id="how-it-works" class="glass-panel rounded-2xl p-6 sm:p-10 mb-16 border border-white/10">
-      <h2 class="text-2xl sm:text-3xl font-extrabold text-center text-white mb-8">
-        How to Download Media in 3 Easy Steps
-      </h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-        <div class="space-y-3">
-          <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-300 font-extrabold text-lg flex items-center justify-center mx-auto border border-cyan-500/40 shadow-inner">
-            1
-          </div>
-          <h4 class="text-base font-bold text-white">Copy TikTok / IG Link</h4>
-          <p class="text-sm text-gray-400">
-            Open TikTok or Instagram, tap "Share" on any video/reel, and select "Copy Link".
-          </p>
-        </div>
-        <div class="space-y-3">
-          <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-300 font-extrabold text-lg flex items-center justify-center mx-auto border border-rose-500/40 shadow-inner">
-            2
-          </div>
-          <h4 class="text-base font-bold text-white">Analyze Technical Specs</h4>
-          <p class="text-sm text-gray-400">
-            Paste the link above and click Analyze to view resolution, FPS, and creator details.
-          </p>
-        </div>
-        <div class="space-y-3">
-          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-300 font-extrabold text-lg flex items-center justify-center mx-auto border border-emerald-500/40 shadow-inner">
-            3
-          </div>
-          <h4 class="text-base font-bold text-white">Save Video or Audio</h4>
-          <p class="text-sm text-gray-400">
-            Select "Download Video (MP4)" for high resolution video or "Download Audio (MP3)" for sound.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- FAQ Accordion -->
-    <div class="mb-12">
-      <h2 class="text-2xl font-extrabold text-center text-white mb-8">Frequently Asked Questions</h2>
-      <div class="space-y-4 max-w-3xl mx-auto">
-        <details class="group glass-panel rounded-xl p-5 cursor-pointer">
-          <summary class="flex justify-between items-center font-bold text-white group-open:text-cyan-400 transition">
-            <span>Does this tool download videos without watermarks?</span>
-            <span class="transition group-open:rotate-180 text-cyan-400">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </span>
-          </summary>
-          <p class="text-gray-300 text-sm mt-3 pt-3 border-t border-white/10 leading-relaxed">
-            Yes. The engine extracts the raw media stream directly, bypassing watermarked video overlays for clean playback.
-          </p>
-        </details>
-
-        <details class="group glass-panel rounded-xl p-5 cursor-pointer">
-          <summary class="flex justify-between items-center font-bold text-white group-open:text-cyan-400 transition">
-            <span>Can I extract MP3 audio from any video?</span>
-            <span class="transition group-open:rotate-180 text-cyan-400">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </span>
-          </summary>
-          <p class="text-gray-300 text-sm mt-3 pt-3 border-t border-white/10 leading-relaxed">
-            Yes! Clicking "Download Audio (MP3)" extracts the standalone audio track and encodes it into 320kbps MP3 format.
-          </p>
-        </details>
-
-        <details class="group glass-panel rounded-xl p-5 cursor-pointer">
-          <summary class="flex justify-between items-center font-bold text-white group-open:text-cyan-400 transition">
-            <span>Is downloading safe and private?</span>
-            <span class="transition group-open:rotate-180 text-cyan-400">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </span>
-          </summary>
-          <p class="text-gray-300 text-sm mt-3 pt-3 border-t border-white/10 leading-relaxed">
-            Absolutely. Downloaded files are temporarily handled and immediately destroyed after completion.
-          </p>
-        </details>
-      </div>
-    </div>
-
   </main>
 
   <!-- Footer -->
   <footer class="w-full border-t border-white/10 py-8 text-center text-xs text-gray-400 glass-panel mt-12 relative z-10">
     <div class="max-w-6xl mx-auto px-4 space-y-2">
-      <p class="text-gray-300 font-semibold">
-        TokFetch 3D • Fast, Sleek TikTok & Instagram Media Extraction
-      </p>
-      <p class="text-[11px] text-gray-500">
-        Disclaimer: This tool is intended for personal and educational use only. Respect creator rights and platform policies.
+      <div class="flex items-center justify-center gap-2 text-white font-bold text-sm mb-1">
+        <img src="/static/ahmed_nadi.jpg" class="w-6 h-6 rounded-full object-cover border border-cyan-400" alt="Ahmed Nadi">
+        <span>Ahmed Nadi Media Downloader © 2026</span>
+      </div>
+      <p class="text-gray-400 font-semibold">
+        Engineered with FastAPI, Three.js 3D & Tailwind CSS by Ahmed Nadi.
       </p>
     </div>
   </footer>
@@ -686,7 +642,7 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/static/bg3d.js?v=5.2.0"></script>
-  <script src="/static/app.js?v=5.2.0"></script>
+  <script src="/static/bg3d.js?v=5.4.0"></script>
+  <script src="/static/app.js?v=5.4.0"></script>
 </body>
 </html>
