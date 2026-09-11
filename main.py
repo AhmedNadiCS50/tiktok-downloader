@@ -658,6 +658,33 @@ async def download(
 
 # ── Static / Frontend ─────────────────────────────────────────────────────────
 
+# PWA: Serve manifest.json from root
+@app.get("/manifest.json")
+async def manifest():
+    f = STATIC_DIR / "manifest.json"
+    if f.exists():
+        return FileResponse(
+            path=str(f),
+            media_type="application/manifest+json",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+    raise HTTPException(404, "manifest.json not found")
+
+# PWA: Serve Service Worker from root (must be at root scope)
+@app.get("/sw.js")
+async def service_worker():
+    f = STATIC_DIR / "sw.js"
+    if f.exists():
+        return FileResponse(
+            path=str(f),
+            media_type="application/javascript",
+            headers={
+                "Service-Worker-Allowed": "/",
+                "Cache-Control": "no-cache",
+            },
+        )
+    raise HTTPException(404, "sw.js not found")
+
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 

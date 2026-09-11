@@ -1,7 +1,97 @@
 /**
  * Ahmed Nadi Media Downloader — v6.0.0
- * Full feature JS: Ripple, Dark Mode, Stats, History, Batch, QR, Progress Bar, Stream URL, Social Theme
+ * Full feature JS: Ripple, Dark Mode, Stats, History, Batch, QR, Progress Bar, Stream URL, Social Theme, PWA
  */
+
+// ── PWA: Service Worker Registration ─────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then((reg) => {
+        console.log('[PWA] Service Worker registered, scope:', reg.scope);
+        // Check for updates periodically
+        setInterval(() => reg.update(), 60 * 60 * 1000); // every hour
+      })
+      .catch((err) => console.warn('[PWA] SW registration failed:', err));
+  });
+}
+
+// ── PWA: Install Prompt ──────────────────────────────────────────────────────
+let deferredInstallPrompt = null;
+let pwaInstallShownOnce = false;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  console.log('[PWA] Install prompt captured');
+
+  // Show the header install button
+  const headerBtn = document.getElementById('pwaInstallHeaderBtn');
+  if (headerBtn) headerBtn.classList.add('show');
+
+  // Show the banner (only once per session, and not if user dismissed before)
+  const dismissed = sessionStorage.getItem('pwa_banner_dismissed');
+  if (!dismissed && !pwaInstallShownOnce) {
+    pwaInstallShownOnce = true;
+    setTimeout(() => {
+      const banner = document.getElementById('pwaInstallBanner');
+      if (banner) banner.classList.add('show');
+    }, 3000); // Show after 3 seconds
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  console.log('[PWA] App installed successfully');
+  deferredInstallPrompt = null;
+  const banner = document.getElementById('pwaInstallBanner');
+  if (banner) banner.classList.remove('show');
+  const headerBtn = document.getElementById('pwaInstallHeaderBtn');
+  if (headerBtn) headerBtn.classList.remove('show');
+  // Show success toast
+  setTimeout(() => {
+    if (typeof showToast === 'function') showToast('تم تثبيت التطبيق بنجاح! 🎉', '📲');
+  }, 500);
+});
+
+// PWA install trigger function
+function triggerPWAInstall() {
+  if (!deferredInstallPrompt) {
+    // Fallback: show manual instructions
+    if (typeof showToast === 'function') {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        showToast('اضغط على زر المشاركة ثم "إضافة إلى الشاشة الرئيسية"', 'ℹ️', 5000);
+      } else {
+        showToast('افتح القائمة في المتصفح واختر "تثبيت التطبيق"', 'ℹ️', 5000);
+      }
+    }
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then((choice) => {
+    console.log('[PWA] User choice:', choice.outcome);
+    deferredInstallPrompt = null;
+  });
+}
+
+// Bind PWA install buttons (after DOM ready)
+document.addEventListener('DOMContentLoaded', () => {
+  const headerBtn = document.getElementById('pwaInstallHeaderBtn');
+  const bannerAccept = document.getElementById('pwaInstallBannerAccept');
+  const bannerDismiss = document.getElementById('pwaInstallBannerDismiss');
+  const bannerClose = document.getElementById('pwaInstallBannerClose');
+  const banner = document.getElementById('pwaInstallBanner');
+
+  if (headerBtn) headerBtn.addEventListener('click', triggerPWAInstall);
+  if (bannerAccept) bannerAccept.addEventListener('click', triggerPWAInstall);
+
+  const dismissBanner = () => {
+    if (banner) banner.classList.remove('show');
+    sessionStorage.setItem('pwa_banner_dismissed', '1');
+  };
+  if (bannerDismiss) bannerDismiss.addEventListener('click', dismissBanner);
+  if (bannerClose) bannerClose.addEventListener('click', dismissBanner);
+});
 
 // ── API Base ─────────────────────────────────────────────────────────────────
 const getApiBase = () => {
@@ -94,20 +184,24 @@ function createRipple(e) {
 document.querySelectorAll('.ripple-container').forEach(el => el.addEventListener('click', createRipple));
 
 
-// ── CURSOR PARTICLE EFFECT ────────────────────────────────────────────────────
+// ── CURSOR PARTICLE EFFECT (Desktop only) ─────────────────────────────────────
+const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 let lastParticleTime = 0;
-document.addEventListener('mousemove', (e) => {
-  const now = performance.now();
-  if (now - lastParticleTime < 50) return;
-  lastParticleTime = now;
-  const p = document.createElement('div');
-  p.classList.add('cursor-particle');
-  p.style.left = e.clientX + 'px';
-  p.style.top  = e.clientY + 'px';
-  p.style.background = `radial-gradient(circle, ${Math.random() > 0.5 ? '#00F2FE' : '#FE2C55'}, transparent)`;
-  document.body.appendChild(p);
-  setTimeout(() => p.remove(), 800);
-});
+
+if (!isTouchDevice) {
+  document.addEventListener('mousemove', (e) => {
+    const now = performance.now();
+    if (now - lastParticleTime < 50) return;
+    lastParticleTime = now;
+    const p = document.createElement('div');
+    p.classList.add('cursor-particle');
+    p.style.left = e.clientX + 'px';
+    p.style.top  = e.clientY + 'px';
+    p.style.background = `radial-gradient(circle, ${Math.random() > 0.5 ? '#00F2FE' : '#FE2C55'}, transparent)`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+  }, { passive: true });
+}
 
 
 // ── DARK / LIGHT MODE ─────────────────────────────────────────────────────────

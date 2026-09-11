@@ -2,10 +2,25 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Ahmed Nadi Downloader v6.0 | TikTok & Instagram HD</title>
   <meta name="description" content="Ahmed Nadi's ultra-fast TikTok & Instagram media downloader with 3D interactive Jellyfish background, galaxy star field, and full feature suite.">
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#05070A" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#EEF2FF" media="(prefers-color-scheme: light)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Media DL">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Ahmed Nadi Media Downloader">
+  <meta name="msapplication-TileColor" content="#05070A">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/static/icons/icon-512.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,6 +61,10 @@
       --text:        #F3F4F6;
       --text-muted:  #9CA3AF;
       --input-bg:    rgba(7,10,16,0.75);
+      --safe-top:    env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left:   env(safe-area-inset-left, 0px);
+      --safe-right:  env(safe-area-inset-right, 0px);
     }
     [data-theme="light"] {
       --bg:          #F0F4FF;
@@ -56,12 +75,30 @@
       --input-bg:    rgba(255,255,255,0.9);
     }
 
+    /* ── Global Resets & Performance ────────────────────────────── */
+    *, *::before, *::after {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      scroll-behavior: smooth;
+      touch-action: manipulation;
+    }
+
     body {
       background-color: var(--bg);
       color: var(--text);
       font-family: 'Plus Jakarta Sans', sans-serif;
       overflow-x: hidden;
       transition: background-color 0.35s ease, color 0.35s ease;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+      padding-left: var(--safe-left);
+      padding-right: var(--safe-right);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     [data-theme="light"] body { background-color: #EEF2FF; }
 
@@ -91,6 +128,7 @@
       border: 1px solid var(--card-border);
       color: var(--text);
       transition: all 0.25s ease;
+      font-size: 16px; /* Prevent iOS zoom on focus */
     }
     .glass-input:focus {
       outline: none;
@@ -161,6 +199,7 @@
       background: linear-gradient(90deg, #00F2FE, #4FACFE, #FE2C55);
       transition: width 0.4s ease;
       box-shadow: 0 0 12px rgba(0,242,254,0.6);
+      will-change: width;
     }
 
     /* ── Card Entrance ──────────────────────────────────────────── */
@@ -196,7 +235,7 @@
     }
 
     /* ── History Card ────────────────────────────────────────────── */
-    #historyPanel { max-height: 400px; overflow-y: auto; }
+    #historyPanel { max-height: 400px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
     /* ── Scrollbar ──────────────────────────────────────────────── */
     ::-webkit-scrollbar { width: 6px; }
@@ -211,10 +250,182 @@
       background: radial-gradient(circle, #00F2FE, transparent);
       transform: translate(-50%, -50%);
       animation: particleFade 0.8s ease-out forwards;
+      will-change: transform, opacity;
     }
     @keyframes particleFade {
       0%   { opacity:1; transform: translate(-50%,-50%) scale(1); }
       100% { opacity:0; transform: translate(-50%,-50%) scale(0.2); }
+    }
+
+    /* ── PWA Install Banner ──────────────────────────────────────── */
+    #pwaInstallBanner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 150;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 0 16px;
+      padding-bottom: max(16px, var(--safe-bottom));
+    }
+    #pwaInstallBanner.show {
+      transform: translateY(0);
+    }
+    .install-banner-inner {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 16px 20px;
+      border-radius: 20px 20px 0 0;
+      background: rgba(13, 17, 26, 0.95);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(0, 242, 254, 0.2);
+      border-bottom: none;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5), 0 0 60px rgba(0, 242, 254, 0.1);
+    }
+    [data-theme="light"] .install-banner-inner {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(0, 0, 0, 0.1);
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ── PWA Install Button in Header ────────────────────────────── */
+    #pwaInstallHeaderBtn {
+      display: none;
+    }
+    #pwaInstallHeaderBtn.show {
+      display: flex;
+    }
+
+    /* ── Standalone PWA mode adjustments ─────────────────────────── */
+    @media (display-mode: standalone), (display-mode: fullscreen) {
+      header {
+        padding-top: var(--safe-top) !important;
+      }
+      #pwaInstallBanner, #pwaInstallHeaderBtn {
+        display: none !important;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       ── RESPONSIVE: Mobile Small (< 375px) ───────────────────────
+       ══════════════════════════════════════════════════════════════ */
+    @media (max-width: 374px) {
+      .text-4xl { font-size: 1.5rem !important; }
+      .text-2xl { font-size: 1.15rem !important; }
+      .text-xl  { font-size: 1rem !important; }
+      .px-4     { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+      .py-10    { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+      .gap-6    { gap: 1rem !important; }
+      .p-6      { padding: 1rem !important; }
+      .grid-cols-2 { grid-template-columns: 1fr !important; }
+      #previewCard .grid-cols-2,
+      #previewCard .sm\:grid-cols-4 { grid-template-columns: repeat(2, 1fr) !important; }
+      .glass-panel { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    }
+
+    /* ── RESPONSIVE: Mobile Standard (375-767px) ───────────────── */
+    @media (max-width: 767px) {
+      h1.text-4xl, h1.sm\:text-5xl, h1.md\:text-6xl {
+        font-size: 1.75rem !important;
+        line-height: 1.2 !important;
+      }
+      .mb-10 { margin-bottom: 1.5rem !important; }
+      .mb-16 { margin-bottom: 2rem !important; }
+      .py-10 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+
+      /* Ensure touch targets are min 44px */
+      button, a, select, input, .cursor-pointer {
+        min-height: 44px;
+      }
+
+      /* Fix thumbnail aspect ratio on mobile */
+      #previewCard .aspect-\[9\/14\] {
+        aspect-ratio: 16/9 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+
+      /* Stack preview vertically */
+      #previewCard .md\:flex-row {
+        flex-direction: column !important;
+      }
+
+      /* Reduce glow intensity on mobile for perf */
+      .glow-cyan { box-shadow: 0 0 20px -5px rgba(0,242,254,0.3); }
+      .glow-pink { box-shadow: 0 0 20px -5px rgba(254,44,85,0.3); }
+      .avatar-glow { box-shadow: 0 0 16px rgba(0,242,254,0.3), 0 0 30px rgba(254,44,85,0.2); }
+
+      /* Features grid → single column */
+      .md\:grid-cols-3 { grid-template-columns: 1fr !important; }
+
+      /* Reduce ambient orbs on mobile */
+      .fixed.w-\[600px\], .fixed.w-\[700px\] {
+        width: 300px !important;
+        height: 300px !important;
+        blur: 100px !important;
+      }
+    }
+
+    /* ── RESPONSIVE: Tablet (768-1023px) ───────────────────────── */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      h1.text-4xl { font-size: 2.5rem !important; }
+      .max-w-4xl { max-width: 680px !important; }
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       ── 60Hz PERFORMANCE OPTIMIZATIONS ────────────────────────────
+       ══════════════════════════════════════════════════════════════ */
+
+    /* GPU-accelerated animations only (transform + opacity) */
+    .animate-pulse-slow,
+    .animate-float-smooth,
+    .animate-card-in,
+    .animate-pulse,
+    .animate-ping {
+      will-change: transform, opacity;
+      transform: translateZ(0);
+    }
+
+    /* Reduce backdrop blur complexity on lower-end devices */
+    @media (hover: none) and (pointer: coarse) {
+      .glass-panel {
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      .glass-input {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+      /* Disable cursor particles on touch devices */
+      .cursor-particle { display: none !important; }
+    }
+
+    /* Respect user's reduced-motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+      .cursor-particle { display: none !important; }
+      .animate-pulse, .animate-ping, .animate-pulse-slow {
+        animation: none !important;
+      }
+      #bg3dCanvas { display: none !important; }
+    }
+
+    /* Optimize compositing for animated elements */
+    #toast, #pwaInstallBanner, #qrModal {
+      will-change: transform, opacity;
+      transform: translateZ(0);
+    }
+
+    header.glass-panel {
+      will-change: auto;
+      transform: translateZ(0);
     }
   </style>
 </head>
@@ -253,6 +464,11 @@
           <span id="serverStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
           <span id="serverStatusText">Engine Ready</span>
         </div>
+
+        <!-- PWA Install Button (Header) -->
+        <button id="pwaInstallHeaderBtn" title="تثبيت التطبيق" class="items-center gap-1.5 p-2.5 rounded-xl bg-gradient-to-r from-cyan-500/10 to-rose-500/10 border border-cyan-500/30 hover:border-cyan-400/60 transition cursor-pointer text-cyan-300 text-xs font-bold">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </button>
 
         <!-- Dark/Light Toggle -->
         <button id="themeToggle" title="Toggle Theme" class="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/40 transition cursor-pointer">
@@ -633,6 +849,33 @@
       <p>Engineered with FastAPI, Three.js Jellyfish 3D, QR Code & Batch Downloader by Ahmed Nadi.</p>
     </div>
   </footer>
+
+  <!-- PWA Install Banner -->
+  <div id="pwaInstallBanner">
+    <div class="install-banner-inner">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl overflow-hidden border border-cyan-500/30 shadow-lg shrink-0">
+          <img src="/static/icons/icon-192.png" alt="App Icon" class="w-full h-full object-cover">
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="font-extrabold text-sm" style="color:var(--text)">تثبيت Ahmed Nadi Downloader</div>
+          <div class="text-xs mt-0.5" style="color:var(--text-muted)">ثبّت التطبيق على جهازك للوصول السريع بدون متصفح</div>
+        </div>
+        <button id="pwaInstallBannerClose" class="p-2 rounded-lg hover:bg-white/10 transition shrink-0" style="color:var(--text-muted)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="flex gap-2.5 mt-3.5">
+        <button id="pwaInstallBannerDismiss" class="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-bold transition hover:bg-white/10" style="color:var(--text-muted)">
+          ليس الآن
+        </button>
+        <button id="pwaInstallBannerAccept" class="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-500 to-rose-500 text-white text-sm font-extrabold transition hover:from-cyan-400 hover:to-rose-400 active:scale-[0.97] shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          تثبيت التطبيق
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Toast -->
   <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">

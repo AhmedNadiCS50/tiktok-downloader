@@ -1,0 +1,56 @@
+{
+  "name": "Ahmed Nadi Media Downloader",
+  "short_name": "Media DL",
+  "description": "تنزيل فيديوهات TikTok و Instagram و YouTube بجودة HD بدون علامة مائية",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#05070A",
+  "background_color": "#05070A",
+  "categories": ["utilities", "entertainment"],
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Paste & Download",
+      "short_name": "Download",
+      "description": "الصق الرابط وحمّل مباشرة",
+      "url": "/?action=paste",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}
