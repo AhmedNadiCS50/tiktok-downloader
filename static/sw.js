@@ -3,14 +3,14 @@
  * Cache Strategy: Cache-first for static, Network-first for API
  */
 
-const CACHE_NAME = 'ahmed-nadi-dl-v6.0.0';
-const STATIC_CACHE = 'ahmed-nadi-static-v6.0.0';
+const CACHE_NAME = 'ahmed-nadi-dl-v6.1.0';
+const STATIC_CACHE = 'ahmed-nadi-static-v6.1.0';
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = [
   '/',
   '/static/index.html',
-  '/static/app.js?v=6.0.0',
+  '/static/app.js?v=6.1.0',
   '/static/bg3d.js?v=6.0.0',
   '/static/ahmed_nadi.jpg',
   '/static/icons/icon-192.png',
@@ -89,7 +89,7 @@ self.addEventListener('fetch', (event) => {
 // ── Cache-first strategy ────────────────────────────────────────────────────
 async function cacheFirst(request, cacheName) {
   try {
-    const cached = await caches.match(request);
+    const cached = await caches.match(request, { ignoreSearch: true });
     if (cached) return cached;
 
     const response = await fetch(request);
@@ -99,12 +99,12 @@ async function cacheFirst(request, cacheName) {
     }
     return response;
   } catch (err) {
-    const cached = await caches.match(request);
+    const cached = await caches.match(request, { ignoreSearch: true });
     if (cached) return cached;
 
     // Offline fallback for navigation requests
     if (request.mode === 'navigate') {
-      return caches.match('/') || new Response(
+      return caches.match('/', { ignoreSearch: true }) || new Response(
         offlinePage(),
         { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
       );
@@ -112,6 +112,31 @@ async function cacheFirst(request, cacheName) {
     throw err;
   }
 }
+
+// ── Notification Click: Quick Download Action ────────────────────────────────
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const action = event.action;
+
+  let targetPath = '/?action=paste_auto';
+  if (action === 'open_app') {
+    targetPath = '/';
+  }
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.navigate(targetPath);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetPath);
+      }
+    })
+  );
+});
 
 // ── Network-first strategy ──────────────────────────────────────────────────
 async function networkFirst(request) {

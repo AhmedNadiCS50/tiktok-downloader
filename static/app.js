@@ -74,7 +74,110 @@ function triggerPWAInstall() {
   });
 }
 
-// Bind PWA install buttons (after DOM ready)
+// ── URL Extractor (Cleans text shared from TikTok / IG) ───────────────────────
+function extractUrlFromText(text) {
+  if (!text) return '';
+  const match = text.match(/(https?:\/\/[^\s]+)/i);
+  return match ? match[0] : text.trim();
+}
+
+// ── Quick Notification Action (Method 3) ──────────────────────────────────────
+async function setupQuickNotification() {
+  if (!('Notification' in window)) {
+    if (typeof showToast === 'function') showToast('المتصفح لا يدعم الإشعارات في هذا الوضع', '⚠️');
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    if (typeof showToast === 'function') showToast('يرجى تمكين إذن الإشعارات من إعدادات المتصفح', '⚠️');
+    return;
+  }
+
+  let permission = Notification.permission;
+  if (permission !== 'granted') {
+    permission = await Notification.requestPermission();
+  }
+  if (permission !== 'granted') {
+    if (typeof showToast === 'function') showToast('تم رفض إذن الإشعارات', 'ℹ️');
+    return;
+  }
+
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      reg.showNotification('Ahmed Nadi Downloader ⚡', {
+        body: 'انسخ رابط تيك توك ثم اضغط هنا لتحميله فوراً بدون فتح المتصفح',
+        icon: '/static/icons/icon-192.png',
+        badge: '/static/icons/icon-192.png',
+        tag: 'quick-download-notification',
+        renotify: false,
+        silent: true,
+        requireInteraction: true,
+        actions: [
+          { action: 'paste_download', title: '📥 تحميل الرابط المنسوخ' },
+          { action: 'open_app', title: '📱 فتح التطبيق' }
+        ]
+      });
+      if (typeof showToast === 'function') showToast('تم تفعيل إشعار التنزيل السريع بشريط المهام! 🔔', '✅');
+    } catch (err) {
+      console.warn('Quick notification setup failed:', err);
+      if (typeof showToast === 'function') showToast('تعذر إظهار الإشعار', '⚠️');
+    }
+  }
+}
+
+// ── Handle Web Share Target & Auto-Paste on Launch ────────────────────────────
+function handleSharedLinkOrAction() {
+  const params = new URLSearchParams(window.location.search);
+  const sharedUrl = params.get('url');
+  const sharedText = params.get('text');
+  const sharedTitle = params.get('title');
+  const action = params.get('action');
+
+  let candidate = '';
+  if (sharedUrl) candidate = extractUrlFromText(sharedUrl);
+  else if (sharedText) candidate = extractUrlFromText(sharedText);
+  else if (sharedTitle) candidate = extractUrlFromText(sharedTitle);
+
+  if (candidate && candidate.startsWith('http')) {
+    const input = document.getElementById('urlInput');
+    const clear = document.getElementById('clearBtn');
+    const form = document.getElementById('analyzeForm');
+    if (input) {
+      input.value = candidate;
+      if (clear) clear.classList.remove('hidden');
+      if (typeof showToast === 'function') showToast('تم استلام الرابط بنجاح، جاري التحليل... 🚀', '📲');
+      setTimeout(() => {
+        if (form) form.dispatchEvent(new Event('submit'));
+      }, 500);
+      window.history.replaceState({}, document.title, '/');
+    }
+  } else if (action === 'paste_auto' || action === 'paste') {
+    setTimeout(async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        const extracted = extractUrlFromText(text);
+        if (extracted && extracted.startsWith('http')) {
+          const input = document.getElementById('urlInput');
+          const clear = document.getElementById('clearBtn');
+          const form = document.getElementById('analyzeForm');
+          if (input) {
+            input.value = extracted;
+            if (clear) clear.classList.remove('hidden');
+            if (typeof showToast === 'function') showToast('تم التقاط الرابط من الحافظة! ⚡', '📥');
+            if (form) form.dispatchEvent(new Event('submit'));
+          }
+        } else {
+          if (typeof showToast === 'function') showToast('الصق الرابط في المربع للتحميل', '📋');
+        }
+      } catch (err) {
+        if (typeof showToast === 'function') showToast('الصق الرابط في المربع للتحميل', '📋');
+      }
+      window.history.replaceState({}, document.title, '/');
+    }, 400);
+  }
+}
+
+// Bind PWA install & Quick Notify buttons (after DOM ready)
 document.addEventListener('DOMContentLoaded', () => {
   const headerBtn = document.getElementById('pwaInstallHeaderBtn');
   const bannerAccept = document.getElementById('pwaInstallBannerAccept');
@@ -82,8 +185,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const bannerClose = document.getElementById('pwaInstallBannerClose');
   const banner = document.getElementById('pwaInstallBanner');
 
+  const quickNotifyBtn = document.getElementById('quickNotifyBtn');
+  const quickNotifyBannerBtn = document.getElementById('enableQuickNotifyBannerBtn');
+
   if (headerBtn) headerBtn.addEventListener('click', triggerPWAInstall);
   if (bannerAccept) bannerAccept.addEventListener('click', triggerPWAInstall);
+
+  if (quickNotifyBtn) quickNotifyBtn.addEventListener('click', setupQuickNotification);
+  if (quickNotifyBannerBtn) quickNotifyBannerBtn.addEventListener('click', setupQuickNotification);
 
   const dismissBanner = () => {
     if (banner) banner.classList.remove('show');
@@ -91,6 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   if (bannerDismiss) bannerDismiss.addEventListener('click', dismissBanner);
   if (bannerClose) bannerClose.addEventListener('click', dismissBanner);
+
+  // Check for shared links or quick action clicks
+  handleSharedLinkOrAction();
 });
 
 // ── API Base ─────────────────────────────────────────────────────────────────
